@@ -1,62 +1,66 @@
 import queue
-
-class Node:	
-    # function - callback for handler	
-    # start - callback for initialization	
-    def start(self):	
-        # return a list of events : [(message: Message)]	
-        return []	
-
-    # message : Message	
-    def handle_message(self, message):	
-        # return a list of events : [(message: Message)]	
-        return []	
-
-    # return (delay:int, event: Event) or None
-    def handle_event(self, event):	
-        return None
-
-
-class Message:
-    def __init__(self, src, to, body):
-        self.src = src
-        self.to = to
-        self.body = body
-
-    def __str__(self):
-        return self.src.__str__() + " -> " + self.to.__str__() + "; body: " + self.body.__str__()
-
-    def __lt__(self, other):
-        return self.body < other.body
-
+from typing import List, Tuple, Optional
 
 class Event:
-    def __init__(self, src, body):
-        self.src = src
+    def __init__(self, body):
         self.body = body
 
     def __str__(self):
-        return "event: " + str(self.src) + "; body: " + str(self.body)
+        return "Event: " + str(self.body)
 
     def __lt__(self, other):
         return self.body < other.body
 
+class Message(Event):
+    def __init__(self, src: int, to: int, body):
+        super().__init__(body)
+        self.src = src
+        self.to = to
 
-class SimulatorEvent:
-    def __init__(self, state):
-        self.status = state
+    def __str__(self):
+        return "Message: " + str(self.src) + " -> " + str(self.to) + " :: " + str(self.body)
+
+class SelfEvent(Event):
+    def __init__(self, origin: int, body):
+        super().__init__(body)
+        self.origin = origin
+        self.body = body
+
+    def __str__(self):
+        return "Self Event: " + str(self.origin) + " :: " + str(self.body)
+
+
+class SimulatorEvent(Event):
+    def __init__(self, body):
+        super().__init__(body)
 
 
 class StartSimulationEvent (SimulatorEvent):
     def __init__(self):
         super().__init__(None)
 
+class Node:	
+    # function - callback for handler	
+    # start - callback for initialization	
+    def start(self) -> List[Message]:
+        # return a list of events : [(message: Message)]	
+        return []
+
+    # message : Message	
+    def handle_message(self, message: Message) -> List[Message]:	
+        # return a list of events : [(message: Message)]
+        return []	
+
+    # return (delay:int, event: Event) or None
+    def handle_event(self, event: Event) -> Optional[Tuple[int, Event]]:
+        return None
+
 
 class Simulator:
     # distances : [src][to] = dst
     # events : [(delay), message: Message]
     # nodes : [Node]
-    def __init__(self, nodes, distances):
+    def __init__(self, nodes: List[Node], distances: List[List[int]]):
         self.nodes = nodes
         self.distances = distances
         self.events = queue.PriorityQueue()
@@ -64,22 +68,22 @@ class Simulator:
         self.event_history = []
 
     # return [(delay, event: Event)]
-    def handle_simulator_event(self, event):
+    def handle_simulator_event(self, event: Event) -> List[Tuple[int, Event]]:
         return []
 
     # msg: Message
-    def put_message(self, msg):
+    def put_message(self, msg: Message):
         delay = self.distances[msg.src][msg.to]
-        self.events.put((delay, msg))
+        self.put_event((delay, msg))
 
-    def put_event(self, event):
+    def put_event(self, event: Tuple[int, Event]):
         (delay, new_event) = event
         self.events.put((self.current_time + delay, new_event))
 
     # events = event
-    def put_messages(self, events):
-        for event in events:
-            self.put_message(event)
+    def put_messages(self, messages: List[Message]):
+        for message in messages:
+            self.put_message(message)
 
     def start(self):
         self.handle_simulator_event(StartSimulationEvent())
@@ -110,8 +114,8 @@ class Simulator:
             else:
                 raise NotImplementedError()
 
-    def get_message_events(self):
+    def get_message_events(self) -> List[Tuple[int, Event]]:
         return [(time, ev) for (time, ev) in self.event_history if isinstance(ev, Message)]
 
-    def get_events(self):
+    def get_events(self) -> List[Tuple[int, Event]]:
         return self.event_history
