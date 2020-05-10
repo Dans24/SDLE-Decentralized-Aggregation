@@ -3,10 +3,9 @@ import random
 import statistics
 
 class ExtremaNode(discrete_event_simulator.Node):
-    def __init__(self, node, neighbours, K: int, T: int, fanout=None, drop_chance=0.0):
+    def __init__(self, node, neighbours, K: int, T: int, drop_chance=0.0):
         self.node = node
         self.neighbours = neighbours
-        self.fanout = fanout if fanout != None else len(self.neighbours)
         self.K = K
         self.T = T
         self.drop_chance = drop_chance
@@ -19,7 +18,7 @@ class ExtremaNode(discrete_event_simulator.Node):
             self.x.append(random.expovariate(1))
         
         msgs = []
-        for neighbour in random.sample(self.neighbours, self.fanout):
+        for neighbour in self.neighbours:
             if random.random() > self.drop_chance:
                 msgs.append(discrete_event_simulator.Message(self.node, neighbour, self.x))
         return msgs
@@ -35,7 +34,10 @@ class ExtremaNode(discrete_event_simulator.Node):
         else:
             self.nonews += 1
         if self.nonews >= self.T:
-            # Make show the number of nodes
+            if self.converged:
+                N = (self.K - 1) / sum(self.x) # unbiased estimator of N with exponential distribution
+                variance = (N**2) / (self.K - 2)
+                # print("Nodes: " , N, " Variance: ", variance)
             self.converged = True
             return []
         else:
@@ -48,31 +50,47 @@ class ExtremaNode(discrete_event_simulator.Node):
     def handle_event(self, event):	
         return None
     
+class UnstableNetworkSimulator(discrete_event_simulator.Simulator):
+    def __init__(self, nodes, distances, max_dist = 0, timeout = 0, network_change_time = 1, debug = False):
+        super().__init__(nodes, distances)
+        self.max_dist = max_dist
+        self.timeout = timeout
+        self.network_change_time = network_change_time
+        self.debug = debug
 
-def simulatorGenerator(n, K, T, max_dist = 0, fanout = None):
-    rootId = random.randrange(n)
+    def handle_simulator_event(self, event):
+        if self.debug:
+            print("Update network")
+        graph = gen_Graphs.random_graph(len(self.nodes))
+        for node in graph.nodes:
+            self.nodes[node].neighbours = list(graph.neighbors(node))
+            for neighbour in self.nodes[node].neighbours:
+                self.distances[node][neighbour] = random.randrange(1, self.max_dist + 2)
+                #if self.debug:
+                    # print(str(node) + " -> " + str(neighbour) + " = " + str(self.distances[node][neighbour]))
+            self.distances[node][node] = self.timeout
+        return [(random.randrange(1, self.network_change_time + 2), discrete_event_simulator.SimulatorEvent(True))]
+
+def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug = False):
     graph = gen_Graphs.random_graph(n)
-    neighbours = graph.neighbors(rootId)
     dists = [[0 for _ in range(n)] for _ in range(n)] # fill matrix with zeroes
     nodes = []
     for node in graph.nodes:
-        for neighbour in graph.nodes:
-            dists[node][neighbour] = random.randrange(1, max_dist + 2)
-        dists[node][node] = 0
         neighbours = list(graph.neighbors(node))
-        graph_node = ExtremaNode(node, neighbours, K, T, None, 0.0)
+        graph_node = ExtremaNode(node, neighbours, K, T, 0.0)
         nodes.append(graph_node)
-    simulator = discrete_event_simulator.Simulator(nodes, dists)
+    simulator = UnstableNetworkSimulator(nodes, dists, max_dist=max_dist, timeout=timeout, network_change_time=1, debug=True)
     simulator.start()
     return simulator
 
-
 def floods(n_iter):
-    n = 10
+    n = 1000
+    K = 1
+    T = 1000
     times = []
     n_messages = []
     for _ in range(n_iter):
-        simulator = simulatorGenerator(n, 3, 1)
+        simulator = simulatorGenerator(n, K, T)
         num_events = len(simulator.get_message_events())
         print(num_events)
         last_event = simulator.get_events()[num_events - 1]

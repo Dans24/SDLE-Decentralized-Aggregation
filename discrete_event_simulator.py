@@ -78,6 +78,7 @@ class Simulator:
 
     def put_event(self, event: Tuple[int, Event]):
         (delay, new_event) = event
+        # print("Added new event", self.current_time + delay, str(new_event))
         self.events.put((self.current_time + delay, new_event))
 
     # events = event
@@ -85,25 +86,26 @@ class Simulator:
         for message in messages:
             self.put_message(message)
 
-    def start(self):
+    def start(self, debug = False):
         self.handle_simulator_event(StartSimulationEvent())
         for i in self.nodes:
             self.put_messages(i.start())
 
         while not self.events.empty():
             (time, event) = self.events.get()
-            print(self.current_time, time, str(event))
+            if time > self.current_time:
+                print(time)
+            self.current_time = time
+            if debug:
+                print(time, str(event))
             if isinstance(event, SimulatorEvent): # simulator handle SimulatorEvent
                 simulator_events = self.handle_simulator_event(event)
-                if simulator_events:
-                    continue
                 if self.events.empty():
                     break # There is only simulator's event, should stop the simulation
                 for new_event in simulator_events:
                     self.put_event(new_event)
                 continue # SimulatorEvent don't update current_time
             self.event_history.append((time, event))
-            self.current_time = time	
             if isinstance(event, Message):
                 new_events = self.nodes[event.to].handle_message(event)
                 self.put_messages(new_events)
