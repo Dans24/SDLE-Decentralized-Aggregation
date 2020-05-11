@@ -9,7 +9,7 @@ class Event:
         return "Event: " + str(self.body)
 
     def __lt__(self, other):
-        return self.body < other.body
+        return True
 
 class Message(Event):
     def __init__(self, src: int, to: int, body):
@@ -87,7 +87,10 @@ class Simulator:
             self.put_message(message)
 
     def start(self, debug = False):
-        self.handle_simulator_event(StartSimulationEvent())
+        simulator_events = self.handle_simulator_event(StartSimulationEvent())
+        for new_event in simulator_events:
+            self.put_event(new_event)
+        
         for i in self.nodes:
             self.put_messages(i.start())
 

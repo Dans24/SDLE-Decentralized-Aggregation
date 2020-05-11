@@ -6,11 +6,12 @@ import logging.config
 
 
 class ExtremaNode(discrete_event_simulator.Node):
-    def __init__(self, node, neighbours, K: int, T: int, drop_chance=0.0):
+    def __init__(self, node, neighbours, K: int, T: int, drop_chance = 0.0, r: int = 1):
         self.node = node
         self.neighbours = neighbours
         self.K = K
         self.T = T
+        self.r = r
         self.drop_chance = drop_chance
         
     def start(self):
@@ -18,7 +19,7 @@ class ExtremaNode(discrete_event_simulator.Node):
         self.converged = False
         self.x = []
         for _ in range(self.K):
-            self.x.append(random.expovariate(1))
+            self.x.append(self.r * random.expovariate(1))
         
         msgs = []
         for neighbour in self.neighbours:
@@ -87,14 +88,15 @@ def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug 
     return simulator
 
 
+
 def floods(n_iter, n, K, T):
     times = []
     n_messages = []
     logger_file = './logs/n=' + str(n) + " K=" + str(K) + " T=" + str(T) + ".log"
     logger_id = logger_file
     setup_logger(logger_id, logger_file)
-    for i in range(n_iter):
-        simulator = simulatorGenerator(n, K, T)
+    for _ in range(n_iter):
+        simulator = simulatorGenerator(n, K, T, max_dist=20)
         num_events = len(simulator.get_message_events())
         print(num_events)
         last_event = simulator.get_events()[num_events - 1]
