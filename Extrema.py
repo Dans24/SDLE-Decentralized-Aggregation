@@ -1,6 +1,9 @@
 import discrete_event_simulator, gen_Graphs
 import random
 import statistics
+import logging
+import logging.config
+
 
 class ExtremaNode(discrete_event_simulator.Node):
     def __init__(self, node, neighbours, K: int, T: int, drop_chance=0.0):
@@ -66,8 +69,8 @@ class UnstableNetworkSimulator(discrete_event_simulator.Simulator):
             self.nodes[node].neighbours = list(graph.neighbors(node))
             for neighbour in self.nodes[node].neighbours:
                 self.distances[node][neighbour] = random.randrange(1, self.max_dist + 2)
-                #if self.debug:
-                    # print(str(node) + " -> " + str(neighbour) + " = " + str(self.distances[node][neighbour]))
+                if self.debug:
+                    print(str(node) + " -> " + str(neighbour) + " = " + str(self.distances[node][neighbour]))
             self.distances[node][node] = self.timeout
         return [(random.randrange(1, self.network_change_time + 2), discrete_event_simulator.SimulatorEvent(True))]
 
@@ -83,13 +86,14 @@ def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug 
     simulator.start()
     return simulator
 
-def floods(n_iter):
-    n = 1000
-    K = 1
-    T = 1000
+
+def floods(n_iter, n, K, T):
     times = []
     n_messages = []
-    for _ in range(n_iter):
+    logger_file = './logs/n=' + str(n) + " K=" + str(K) + " T=" + str(T) + ".log"
+    logger_id = logger_file
+    setup_logger(logger_id, logger_file)
+    for i in range(n_iter):
         simulator = simulatorGenerator(n, K, T)
         num_events = len(simulator.get_message_events())
         print(num_events)
@@ -97,14 +101,34 @@ def floods(n_iter):
         (last_time, _) = last_event
         n_messages.append(num_events)
         times.append(last_time)
-    print("Tempo mínimo: " + str(min(times)))
-    print("Tempo médio: " + str(statistics.mean(times)))
-    print("Tempo máximo: " + str(max(times)))
-    print()
-    print("Numero mensagens minimo: " + str(min(n_messages)))
-    print("Numero mensagens médio: " + str(statistics.mean(n_messages)))
-    print("Numero mensagens máximo: " + str(max(n_messages)))
+    log("iter: " + str(n_iter) + "; n: " + str(n) +
+        "; k: " + str(K) + "; T: " + str(T), logger_id)
+    log("Tempo mínimo: " + str(min(times)), logger_id)
+    log("Tempo médio: " + str(statistics.mean(times)), logger_id)
+    log("Tempo máximo: " + str(max(times)), logger_id)
+    log("Numero mensagens minimo: " + str(min(n_messages)), logger_id)
+    log("Numero mensagens médio: " + str(statistics.mean(n_messages)), logger_id)
+    log("Numero mensagens máximo: " + str(max(n_messages)), logger_id)
 
 
-floods(20)
+
+def setup_logger(logger_name, log_file, level=logging.INFO):
+    log_setup = logging.getLogger(logger_name)
+    formatter = logging.Formatter('%(levelname)s: %(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+    fileHandler = logging.FileHandler(log_file, mode='w')
+    fileHandler.setFormatter(formatter)
+    streamHandler = logging.StreamHandler()
+    streamHandler.setFormatter(formatter)
+    log_setup.setLevel(level)
+    log_setup.addHandler(fileHandler)
+    log_setup.addHandler(streamHandler)
+
+
+def log(msg, loggerId):
+    logger = logging.getLogger(loggerId)
+    logger.info(msg)
+
+
+for i in range(1, 10):
+    floods(100, 10, 10*i, 5)
 print("Fim!!")
