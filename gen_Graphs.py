@@ -26,6 +26,7 @@ def preferential_graph(n):
             array.extend([a, b])
     return graph
 
+
 def twod_graph(n, ray):
     graph = nx.Graph()
     graph.add_nodes_from(range(n))
@@ -39,6 +40,7 @@ def twod_graph(n, ray):
                 positions[a] = [random.randrange(n),random.randrange(n)]
                 continue
             connected = True
+    return graph
 
 def hasNeighbours(graph, ray, positions, a):
     result = False
