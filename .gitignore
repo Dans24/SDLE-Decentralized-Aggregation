@@ -1,1 +1,3 @@
 .vscode/
+.__pycache__/
+./ExtremaAllNeighbours/__pycache__/
