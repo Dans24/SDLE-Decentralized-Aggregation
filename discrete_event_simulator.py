@@ -89,7 +89,10 @@ class Simulator:
             self.put_event(new_event)
         
         for i in self.nodes:
-            self.put_messages(i.start())
+            (new_messages, new_self_events) = i.start()
+            self.put_messages(new_messages)
+            for self_event in new_self_events:
+                self.put_event(self_event)
 
         while not self.events.empty():
             (time, event) = self.events.get()
