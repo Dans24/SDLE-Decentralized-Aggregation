@@ -113,8 +113,8 @@ class Simulator:
             else:
                 raise NotImplementedError()
             self.put_messages(new_messages)
-            for self_event in new_self_events:
-                self.put_event(self_event)
+            #for self_event in new_self_events:
+            #    self.put_event(self_event)
 
     def get_message_events(self) -> List[Tuple[int, Event]]:
         return [(time, ev) for (time, ev) in self.event_history if isinstance(ev, Message)]
