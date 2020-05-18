@@ -3,6 +3,7 @@ import random
 import statistics
 import logging
 import logging.config
+import pylab
 
 
 class ExtremaNode(discrete_event_simulator.Node):
@@ -21,13 +22,13 @@ class ExtremaNode(discrete_event_simulator.Node):
         for _ in range(self.K):
             self.x.append(self.r * random.expovariate(1))
         
-        msgs = []
+        msgs = ([], [])
         for neighbour in self.neighbours:
             if random.random() > self.drop_chance:
-                msgs.append(discrete_event_simulator.Message(self.node, neighbour, self.x))
+                msgs[0].append(discrete_event_simulator.Message(self.node, neighbour, self.x))
         return msgs
 
-    def handle_message(self, message: discrete_event_simulator.Message):
+    def handle_message(self, message: discrete_event_simulator.Message, time: int):
         changed = False
         for i in range(self.K):
             if message.body[i] < self.x[i]:
@@ -43,15 +44,15 @@ class ExtremaNode(discrete_event_simulator.Node):
                 variance = (N**2) / (self.K - 2)
                 # print("Nodes: " , N, " Variance: ", variance)
             self.converged = True
-            return []
         else:
-            msgs = []
+            msgs = ([], [])
             for neighbour in self.neighbours:
                 if random.random() > self.drop_chance:
-                    msgs.append(discrete_event_simulator.Message(self.node, neighbour, self.x))
+                    msgs[0].append(discrete_event_simulator.Message(self.node, neighbour, self.x))
             return msgs
+        return [], []
 
-    def handle_event(self, event):	
+    def handle_event(self, event, time: int):
         return None
     
 class UnstableNetworkSimulator(discrete_event_simulator.Simulator):
@@ -88,6 +89,35 @@ def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug 
     return simulator
 
 
+class statistic:
+
+    def __init__(self, tempo_min, tempo_med, tempo_max, n_mensagens_min, n_mensagens_med, n_mensagens_max ):
+        self.tempo_min = tempo_min
+        self.tempo_med = tempo_med
+        self.tempo_max = tempo_max
+        self.n_mensagens_min = n_mensagens_min
+        self.n_mensagens_med = n_mensagens_med
+        self.n_mensagens_max = n_mensagens_max
+
+
+class graph_statistics:
+
+    def __init__(self):
+        self.tempo_mins = []
+        self.tempo_meds = []
+        self.tempo_maxs = []
+        self.n_mensagens_mins = []
+        self.n_mensagens_meds = []
+        self.n_mensagens_maxs = []
+
+    def add_statistic(self, statistic):
+        self.tempo_mins.append(statistic.tempo_min)
+        self.tempo_meds.append(statistic.tempo_med)
+        self.tempo_maxs.append(statistic.tempo_max)
+        self.n_mensagens_mins.append(statistic.n_mensagens_min)
+        self.n_mensagens_meds.append(statistic.n_mensagens_med)
+        self.n_mensagens_maxs.append(statistic.n_mensagens_max)
+
 
 def floods(n_iter, n, K, T):
     times = []
@@ -103,15 +133,53 @@ def floods(n_iter, n, K, T):
         (last_time, _) = last_event
         n_messages.append(num_events)
         times.append(last_time)
+    tempo_min = min(times)
+    tempo_med = statistics.mean(times)
+    tempo_max = max(times)
+    n_mensagens_min = min(n_messages)
+    n_mensagens_med = statistics.mean(n_messages)
+    n_mensagens_max = max(n_messages)
     log("iter: " + str(n_iter) + "; n: " + str(n) +
         "; k: " + str(K) + "; T: " + str(T), logger_id)
-    log("Tempo mínimo: " + str(min(times)), logger_id)
-    log("Tempo médio: " + str(statistics.mean(times)), logger_id)
-    log("Tempo máximo: " + str(max(times)), logger_id)
-    log("Numero mensagens minimo: " + str(min(n_messages)), logger_id)
-    log("Numero mensagens médio: " + str(statistics.mean(n_messages)), logger_id)
-    log("Numero mensagens máximo: " + str(max(n_messages)), logger_id)
+    log("Tempo mínimo: " + str(tempo_min), logger_id)
+    log("Tempo médio: " + str(tempo_med), logger_id)
+    log("Tempo máximo: " + str(tempo_max), logger_id)
+    log("Numero mensagens minimo: " + str(n_mensagens_min), logger_id)
+    log("Numero mensagens médio: " + str(n_mensagens_med), logger_id)
+    log("Numero mensagens máximo: " + str(n_mensagens_max), logger_id)
+    return statistic(tempo_min, tempo_med, tempo_max, n_mensagens_min, n_mensagens_med, n_mensagens_max)
 
+def createPlots(stats, variable, variable_name):
+    pylab.plot(stats.tempo_mins, variable)
+    pylab.savefig('./plots/' + variable_name + "_tempo_mins")
+    pylab.plot(stats.tempo_meds, variable)
+    pylab.savefig('./plots/' + variable_name + "_tempo_meds")
+    pylab.plot(stats.tempo_maxs, variable)
+    pylab.savefig('./plots/' + variable_name + "_tempo_maxs")
+    pylab.plot(stats.n_mensagens_mins, variable)
+    pylab.savefig('./plots/' + variable_name + "_n_mensagens_mins")
+    pylab.plot(stats.n_mensagens_meds, variable)
+    pylab.savefig('./plots/' + variable_name + "_n_mensagens_meds")
+    pylab.plot(stats.n_mensagens_maxs, variable)
+    pylab.savefig('./plots/' + variable_name + "_n_mensagens_maxs")
+
+
+def analyze_floods(range_n, range_K, range_T, stable_n, stable_K, stable_T):
+    stats = graph_statistics()
+    for n in range_n:
+        stat = floods(100, n, stable_K, stable_T)
+        stats.add_statistic(stat)
+    createPlots(stats, range_n, "n")
+    stats = graph_statistics()
+    for K in range_K:
+        stat = floods(100, stable_n, K, stable_T)
+        stats.add_statistic(stat)
+    createPlots(stats, range_K, "K")
+    stats = graph_statistics()
+    for T in range_T:
+        stat = floods(100, stable_n, stable_K, T)
+        stats.add_statistic(stat)
+    createPlots(stats, range_T, "T")
 
 
 def setup_logger(logger_name, log_file, level=logging.INFO):
@@ -131,6 +199,6 @@ def log(msg, loggerId):
     logger.info(msg)
 
 
-for i in range(1, 10):
-    floods(100, 10, 10*i, 5)
+analyze_floods(range(75, 75), range(15, 15), range(14, 16), 75, 15, 15)
+
 print("Fim!!")
