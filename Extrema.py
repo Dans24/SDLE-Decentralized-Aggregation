@@ -92,7 +92,7 @@ def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug 
 
 
 analyser = Simulator_Analyzer()
-range_n = range(5, 100)
+range_n = range(5, 10)
 simulators = []
 for n in range_n:
     simulators.append(simulatorGenerator(n, 15, 15, max_dist=20))
