@@ -20,7 +20,7 @@ class ExtremaNode(discrete_event_simulator.Node):
         self.x = []
         for _ in range(self.K):
             self.x.append(self.r * random.expovariate(1))
-        return self.broadcast_messages(self.x)
+        return (self.broadcast_messages(self.x), self.set_timeout(0, None))
 
     def handle_message(self, message: discrete_event_simulator.Message, time):
         self.time = time
@@ -55,7 +55,7 @@ class ExtremaNode(discrete_event_simulator.Node):
         else:
             if time >= self.timeout_time and not self.converged:
                 self.timeout_time = time + self.timeout
-                timeout_event = [(self.timeout, discrete_event_simulator.SelfEvent(self.node, None))]
+                timeout_event = self.set_timeout(time, None)
             else:
                 timeout_event = []
             msgs = self.broadcast_messages(self.x)
@@ -69,14 +69,13 @@ class ExtremaNode(discrete_event_simulator.Node):
         if time >= self.timeout_time:
             print("TIMEOUT " + str(self.node))
             self.timeout_time = time + self.timeout
-            timeout_event = (self.timeout, discrete_event_simulator.SelfEvent(self.node, None))
+            timeout_event = self.set_timeout(time, None)
             msgs = self.broadcast_messages(self.x)
-            return (msgs, [])
+            return (msgs, timeout_event)
         else:
             print("TIMEOUT2 " + str(self.node))
-            timeout = self.timeout_time - time
-            timeout_event = (timeout, discrete_event_simulator.SelfEvent(self.node, None))
-            return ([], [timeout_event])
+            timeout_event = self.set_timeout(time, None)
+            return ([], timeout_event)
 
     def broadcast_messages(self, body):
         msgs = []
@@ -85,6 +84,10 @@ class ExtremaNode(discrete_event_simulator.Node):
                 msgs.append(discrete_event_simulator.Message(self.node, neighbour, body))
         return msgs
     
+    def set_timeout(self, time, body):
+        self.timeout_time = time + self.timeout
+        return [(self.timeout, discrete_event_simulator.SelfEvent(self.node, body))]
+
 class UnstableNetworkSimulator(discrete_event_simulator.Simulator):
     def __init__(self, nodes, distances, max_dist = 0, timeout = 0, network_change_time = 1, debug = False):
         super().__init__(nodes, distances)
