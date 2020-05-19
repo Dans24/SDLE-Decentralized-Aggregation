@@ -2,6 +2,9 @@ import discrete_event_simulator, gen_Graphs
 import random
 import statistics
 
+from Simulator_Statistics import Simulator_Analyzer
+
+
 class ExtremaNode(discrete_event_simulator.Node):
     def __init__(self, node, neighbours, K: int, T: int, drop_chance = 0.0, r = 1, timeout = 1):
         self.node = node
@@ -48,10 +51,10 @@ class ExtremaNode(discrete_event_simulator.Node):
                 print("Node ", self.node, " :: Result: " , N, " ± ", (variance**(1/2)) * 3)
             else:
                 #msgs.append(discrete_event_simulator.Message(self.node, message.src, message.body))
-                mgs = self.broadcast_messages(message.body)
+                msgs = self.broadcast_messages(message.body)
                 print("me: " + str(message.to) + " to: " + str(message.src) + " request message sent")
             self.converged = True
-            return (msgs, [])
+            return msgs, []
         else:
             if time >= self.timeout_time and not self.converged:
                 self.timeout_time = time + self.timeout
@@ -61,11 +64,11 @@ class ExtremaNode(discrete_event_simulator.Node):
             msgs = self.broadcast_messages(self.x)
             for msg in msgs:
                 print("src: " + str(msg.src) + " to: " + str(msg.to))
-            return (msgs, timeout_event)
+            return msgs, timeout_event
 
     def handle_event(self, event: discrete_event_simulator.SelfEvent, time):
         if self.converged:
-            return ([], [])
+            return [], []
         if time >= self.timeout_time:
             print("TIMEOUT " + str(self.node))
             self.timeout_time = time + self.timeout
@@ -108,7 +111,7 @@ class UnstableNetworkSimulator(discrete_event_simulator.Simulator):
                     # print(str(node) + " -> " + str(neighbour) + " = " + str(self.distances[node][neighbour]))
             self.distances[node][node] = self.timeout
         #return [(random.randrange(1, self.network_change_time + 2), discrete_event_simulator.SimulatorEvent(True))]
-        return []
+        return [], []
 
 def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug = False):
     graph = gen_Graphs.random_graph(n)
@@ -145,5 +148,10 @@ def floods(n_iter):
     print("Numero mensagens máximo: " + str(max(n_messages)))
 
 
-floods(20)
-print("Fim!!")
+analyser = Simulator_Analyzer()
+range_n = range(5, 10)
+simulators = []
+for n in range_n:
+    simulators.append(simulatorGenerator(n, 15, 15, max_dist=20))
+
+analyser.analyze_variable("Number of Nodes", range_n, simulators, 5, title="Extrema Propagation All Neighbours")

@@ -2,6 +2,9 @@ import discrete_event_simulator, gen_Graphs
 import random
 import statistics
 
+from Simulator_Statistics import Simulator_Analyzer
+
+
 class ExtremaNode(discrete_event_simulator.Node):
     def __init__(self, node, neighbours, K: int, T: int, drop_chance = 0.0, r = 1, timeout = 1):
         self.node = node
@@ -132,5 +135,12 @@ def floods(n_iter):
     print("Numero mensagens máximo: " + str(max(n_messages)))
 
 
-floods(20)
+analyser = Simulator_Analyzer()
+range_n = range(5, 10)
+simulators = []
+for n in range_n:
+    simulators.append(simulatorGenerator(n, 15, 15, max_dist=20))
+
+analyser.analyze_variable("Number of Nodes3", range_n, simulators, 5, title="Extrema Propagation Timeout")
+
 print("Fim!!")
