@@ -1,4 +1,5 @@
 import queue
+import string
 from typing import List, Tuple, Optional
 
 class Event:
@@ -124,3 +125,6 @@ class Simulator:
 
     def get_events(self) -> List[Tuple[int, Event]]:
         return self.event_history
+
+    def get_logger_file(self) -> string:
+        return None;
