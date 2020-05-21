@@ -2,6 +2,7 @@ import discrete_event_simulator, gen_Graphs
 import random
 import statistics
 
+
 from Simulator_Statistics import Simulator_Analyzer
 
 
@@ -16,16 +17,17 @@ class ExtremaNode(discrete_event_simulator.Node):
         self.timeout = timeout
         self.timeout_time = 0
         self.gotFrom = []
+        self.converged = False
         
     def start(self):
         self.nonews = 0
-        self.converged = False
         self.x = []
         for _ in range(self.K):
             self.x.append(self.r * random.expovariate(1))
         return (self.broadcast_messages(self.x), self.set_timeout(0, None))
 
     def handle_message(self, message: discrete_event_simulator.Message, time):
+        #print("+" + str(self.converged) + " that I converged")
         self.time = time
         oldx = False
         for i in range(self.K):
@@ -38,7 +40,10 @@ class ExtremaNode(discrete_event_simulator.Node):
         else:
             if message.src not in self.gotFrom: # <---- problema é criado ao colocar este if
                 self.gotFrom.append(message.src)
-            print("me: " + str(message.to) + " src:" + str(message.src) + " current array: " + str(self.gotFrom) + " neighbours: " + str(self.neighbours))
+            if not self.converged:
+                print("me: " + str(message.to) + " src:" + str(message.src) + " current array: " + str(self.gotFrom) + " neighbours: " + str(self.neighbours))
+            else:
+                print("me:" + str(self.node) + " Converged")
             if len(self.gotFrom) == len(self.neighbours):
                 self.nonews += 1
                 self.gotFrom.clear()
@@ -50,35 +55,34 @@ class ExtremaNode(discrete_event_simulator.Node):
                 variance = (N**2) / (self.K - 2)
                 print("Node ", self.node, " :: Result: " , N, " ± ", (variance**(1/2)) * 3)
             else:
-                #msgs.append(discrete_event_simulator.Message(self.node, message.src, message.body))
-                msgs = self.broadcast_messages(message.body)
-                print("me: " + str(message.to) + " to: " + str(message.src) + " request message sent")
+                msgs.append(discrete_event_simulator.Message(self.node, message.src, self.x))
+                #msgs = self.broadcast_messages(self.x)
+                #msgs = self.missingN_messages(self.x)
+                #for msg in msgs:
+                #    print("--> me: " + str(msg.src) + " to: " + str(msg.to) + " request message sent")
             self.converged = True
-            return msgs, []
+            return (msgs, [])
         else:
             if time >= self.timeout_time and not self.converged:
-                self.timeout_time = time + self.timeout
                 timeout_event = self.set_timeout(time, None)
             else:
                 timeout_event = []
-            msgs = self.broadcast_messages(self.x)
+            msgs = self.missingN_messages(self.x)
             for msg in msgs:
                 print("src: " + str(msg.src) + " to: " + str(msg.to))
-            return msgs, timeout_event
+            return (msgs, timeout_event)
 
     def handle_event(self, event: discrete_event_simulator.SelfEvent, time):
         if self.converged:
-            return [], []
+            return ([], [])
         if time >= self.timeout_time:
             print("TIMEOUT " + str(self.node))
-            self.timeout_time = time + self.timeout
-            timeout_event = self.set_timeout(time, None)
             msgs = self.broadcast_messages(self.x)
+            timeout_event = self.set_timeout(time, None)
             return (msgs, timeout_event)
         else:
             print("TIMEOUT2 " + str(self.node))
-            timeout_event = self.set_timeout(time, None)
-            return ([], timeout_event)
+            return ([], self.set_timeout(time, None))
 
     def broadcast_messages(self, body):
         msgs = []
@@ -87,10 +91,17 @@ class ExtremaNode(discrete_event_simulator.Node):
                 msgs.append(discrete_event_simulator.Message(self.node, neighbour, body))
         return msgs
     
+    def missingN_messages(self, body):
+        msgs = []
+        for neighbour in self.neighbours:
+            if neighbour not in self.gotFrom:
+                msgs.append(discrete_event_simulator.Message(self.node, neighbour, body))
+        return msgs
+    
     def set_timeout(self, time, body):
         self.timeout_time = time + self.timeout
         return [(self.timeout, discrete_event_simulator.SelfEvent(self.node, body))]
-
+    
 class UnstableNetworkSimulator(discrete_event_simulator.Simulator):
     def __init__(self, nodes, distances, max_dist = 0, timeout = 0, network_change_time = 1, debug = False):
         super().__init__(nodes, distances)
@@ -100,8 +111,8 @@ class UnstableNetworkSimulator(discrete_event_simulator.Simulator):
         self.debug = debug
 
     def handle_simulator_event(self, event):
-        if self.debug:
-            print("Update network")
+        #if self.debug:
+        #    print("Update network")
         graph = gen_Graphs.random_graph(len(self.nodes))
         for node in graph.nodes:
             self.nodes[node].neighbours = list(graph.neighbors(node))
@@ -111,7 +122,7 @@ class UnstableNetworkSimulator(discrete_event_simulator.Simulator):
                     # print(str(node) + " -> " + str(neighbour) + " = " + str(self.distances[node][neighbour]))
             self.distances[node][node] = self.timeout
         #return [(random.randrange(1, self.network_change_time + 2), discrete_event_simulator.SimulatorEvent(True))]
-        return [], []
+        return []
 
 def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug = False):
     graph = gen_Graphs.random_graph(n)
