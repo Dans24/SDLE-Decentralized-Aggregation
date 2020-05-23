@@ -6,7 +6,6 @@ import pylab
 
 import discrete_event_simulator
 
-
 class Run_Statistics:
     def __init__(self, tempo_min, tempo_med, tempo_max, n_mensagens_min, n_mensagens_med, n_mensagens_max ):
         self.tempo_min = tempo_min

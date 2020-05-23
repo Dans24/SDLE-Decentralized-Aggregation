@@ -3,6 +3,10 @@ import random
 import statistics
 from Simulator_Statistics import Simulator_Analyzer
 
+"""
+Semelhante ao ExtremaTimeout mas apenas um dos nodos é que faz as queries.
+"""
+
 class ExtremaNode(discrete_event_simulator.Node):
     def __init__(self, node, neighbours, K: int, T: int, drop_chance = 0.0, r = 1, timeout = 1):
         self.node = node
@@ -169,11 +173,11 @@ def floods(n_iter):
 
 
 analyser = Simulator_Analyzer()
-range_n = range(5, 10)
+range_n = range(5, 100, 5)
 simulators = []
 for n in range_n:
     simulators.append(simulatorGenerator(n, 15, 15, max_dist=20))
 
-analyser.analyze_variable("Number of Nodes3", range_n, simulators, 5, title="Extrema Propagation Timeout Single Start")
+analyser.analyze_variable("Number of Nodes", range_n, simulators, 10, title="Extrema Propagation Timeout Single Start")
 
 print("Fim!!")

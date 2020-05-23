@@ -54,9 +54,6 @@ class Node:
 
     def handle_event(self, event: Event, time: int = 0) -> Tuple[List[Message], List[Tuple[int, SelfEvent]]]:
         return ([], [])
-    	
-    def finished(self) -> bool:
-        return False
 
 class Simulator:
     # distances : [src][to] = dst
@@ -99,7 +96,7 @@ class Simulator:
             for self_event in new_self_events:
                 self.put_event(self_event)
 
-        while not self.isConverged(): #not self.events.empty()
+        while not self.isConverged() or not self.events.empty():
             for node in self.nodes:
                 print( str(node.node) + " is " + str(node.converged))
             (time, event) = self.events.get()
@@ -122,11 +119,8 @@ class Simulator:
                 new_events = self.nodes[event.origin].handle_event(event, time)
             else:
                 raise NotImplementedError()
-            finish = True
-            for node in self.nodes:
-                finish &= node.finished()
-            if finish or new_events == None:
-                return
+            if new_events == None:
+                break
             (new_messages, new_self_events) = new_events
             self.put_messages(new_messages)
             for self_event in new_self_events:
