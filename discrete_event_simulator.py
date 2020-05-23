@@ -53,6 +53,9 @@ class Node:
 
     def handle_event(self, event: Event, time: int = 0) -> Tuple[List[Message], List[Tuple[int, SelfEvent]]]:
         return ([], [])
+    	
+    def finished(self) -> bool:
+        return False
 
 class Simulator:
     # distances : [src][to] = dst
@@ -111,14 +114,20 @@ class Simulator:
                 continue # SimulatorEvent don't update current_time
             self.event_history.append((time, event))
             if isinstance(event, Message):
-                (new_messages, new_self_events) = self.nodes[event.to].handle_message(event, time)
+                new_events = self.nodes[event.to].handle_message(event, time)
             elif isinstance(event, SelfEvent):
-                (new_messages, new_self_events) = self.nodes[event.origin].handle_event(event, time)
+                new_events = self.nodes[event.origin].handle_event(event, time)
             else:
                 raise NotImplementedError()
+            finish = True
+            for node in self.nodes:
+                finish &= node.finished()
+            if finish or new_events == None:
+                return
+            (new_messages, new_self_events) = new_events
             self.put_messages(new_messages)
-            #for self_event in new_self_events:
-            #    self.put_event(self_event)
+            for self_event in new_self_events:
+                self.put_event(self_event)
 
     def get_message_events(self) -> List[Tuple[int, Event]]:
         return [(time, ev) for (time, ev) in self.event_history if isinstance(ev, Message)]
