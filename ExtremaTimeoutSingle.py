@@ -95,9 +95,9 @@ class ExtremaNodeQuery(ExtremaNode):
         # TODO: basear o T em relação ao número de vizinhos?
         print(self.nonews)
         if self.nonews >= self.T:
-            N = (self.K - 1) / sum(self.x) # unbiased estimator of N with exponential distribution
+            self.N = (self.K - 1) / sum(self.x) # unbiased estimator of N with exponential distribution
             # variance = (N**2) / (self.K - 2)
-            self.emit(time, N)
+            self.emit(time, self.N)
             return None
         # TODO: enviar mensagens apenas quando existe alteração?
         else:
@@ -107,6 +107,9 @@ class ExtremaNodeQuery(ExtremaNode):
                 timeout_event = []
             msgs = self.broadcast_messages(self.x)
             return (msgs, timeout_event)
+        
+        def result(self):
+            return self.N
         
     
     
@@ -173,7 +176,7 @@ def floods(n_iter):
 
 
 analyser = Simulator_Analyzer()
-range_n = range(5, 100, 5)
+range_n = range(5, 15, 5)
 simulators = []
 for n in range_n:
     simulators.append(simulatorGenerator(n, 15, 15, max_dist=20))

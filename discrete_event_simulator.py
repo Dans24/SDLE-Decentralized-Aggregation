@@ -55,6 +55,9 @@ class Node:
     def handle_event(self, event: Event, time: int = 0) -> Tuple[List[Message], List[Tuple[int, SelfEvent]]]:
         return ([], [])
 
+    def result(self):
+        return None
+
 class Simulator:
     # distances : [src][to] = dst
     # events : [(delay), message: Message]
@@ -84,6 +87,15 @@ class Simulator:
     def put_messages(self, messages: List[Message]):
         for message in messages:
             self.put_message(message)
+            
+    def result(self):
+        getResult = lambda node : node.result()
+        hasResult = lambda result : result != None
+        results = filter(hasResult, map(getResult, self.nodes))
+        if len(list(results)) > 0:
+            return (min(results), sum(results) / len(results), max(results))
+        else:
+            return None
 
     def start(self, debug = False):
         simulator_events = self.handle_simulator_event(StartSimulationEvent())
