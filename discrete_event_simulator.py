@@ -2,6 +2,7 @@ import queue
 import string
 from typing import List, Tuple, Optional
 
+
 class Event:
     def __init__(self, body):
         self.body = body
@@ -98,7 +99,9 @@ class Simulator:
             for self_event in new_self_events:
                 self.put_event(self_event)
 
-        while not self.events.empty():
+        while not self.isConverged(): #not self.events.empty()
+            for node in self.nodes:
+                print( str(node.node) + " is " + str(node.converged))
             (time, event) = self.events.get()
             if time > self.current_time:
                 print(time)
@@ -129,6 +132,16 @@ class Simulator:
             for self_event in new_self_events:
                 self.put_event(self_event)
 
+
+    def isConverged(self):
+        convergence = True
+        for node in self.nodes:
+            if not node.converged:
+                convergence = False
+                break
+        print("Convergence is " + str(convergence))
+        return convergence
+
     def get_message_events(self) -> List[Tuple[int, Event]]:
         return [(time, ev) for (time, ev) in self.event_history if isinstance(ev, Message)]
 
@@ -136,4 +149,4 @@ class Simulator:
         return self.event_history
 
     def get_logger_file(self) -> string:
-        return None;
+        return None
