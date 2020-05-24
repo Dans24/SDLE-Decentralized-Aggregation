@@ -54,22 +54,23 @@ class Simulator_Statistics:
         self.results_meds = []
         self.results_maxs = []
 
-    def multiple_runs(self, simulator: discrete_event_simulator, n_iter: int):
+    def multiple_runs(self, simulator: [discrete_event_simulator]):
+        n_iter = len(simulator)
         times = []
         n_messages = []
         results = []
-        logger_file = simulator.get_logger_file()
-        if logger_file is not None:
-            logger_id = logger_file
-            setup_logger(logger_id, logger_file)
         for i in range(n_iter):
-            simulator.start()
-            num_events = len(simulator.get_message_events())
-            last_event = simulator.get_events()[num_events - 1]
+            #logger_file = simulator.get_logger_file()
+            #if logger_file is not None:
+            #    logger_id = logger_file
+            #    setup_logger(logger_id, logger_file)
+            simulator[i].start()
+            num_events = len(simulator[i].get_message_events())
+            last_event = simulator[i].get_events()[num_events - 1]
             (last_time, _) = last_event
             n_messages.append(num_events)
             times.append(last_time)
-            results.append(simulator.result())
+            results.append(simulator[i].result())
             print(round((i / n_iter) * 100, 1), "%")
         tempo_min = min(times)
         tempo_med = statistics.mean(times)
@@ -80,8 +81,8 @@ class Simulator_Statistics:
         results_min = min(map(lambda r: r[0], results)) if len(results) > 0 else None
         results_med = statistics.mean(map(lambda r: r[1], results)) if len(results) > 0 else None
         results_max = max(map(lambda r: r[2], results)) if len(results) > 0 else None
-        if logger_file is not None:
-            self.print_logs(logger_file, times, n_messages)
+        #if logger_file is not None:
+        #    self.print_logs(logger_file, times, n_messages)
         return Run_Statistics(tempo_min, tempo_med, tempo_max, n_mensagens_min, n_mensagens_med, n_mensagens_max, results_min, results_med, results_max)
 
     def print_logs(self, logger_id: string, times, n_messages):
@@ -103,14 +104,14 @@ class Simulator_Analyzer:
     def __init__(self):
         self.simulator_statistics = Simulator_Statistics()
 
-    def analyze_variable(self, var_name: string, variable_values, simulators: [discrete_event_simulator],
+    def analyze_variable(self, var_name: string, variable_values, simulators: [[discrete_event_simulator]],
                          n_runs: int, title="", results_name=""):
         num_simulations = 0
         for simulator in simulators:
-            statistics_from_runs = self.simulator_statistics.multiple_runs(simulator, n_runs)
+            statistics_from_runs = self.simulator_statistics.multiple_runs(simulator)
             self.simulator_statistics.add_statistic(statistics_from_runs)
             num_simulations += 1
-            print("Completed ", num_simulations , "/" , len(simulators))
+            print("\rCompletado ", num_simulations , "/" , len(simulators))
         create_plots(self.simulator_statistics, variable_values, var_name, title, results_name=results_name)
         self.simulator_statistics.clear()
 
@@ -145,17 +146,19 @@ def save_plot(name, x_label, y_label, title):
     pylab.clf()
 
 
-def create_plots(stats: Simulator_Statistics, variable, variable_name: string, title, results_name: string = ""):
-    draw_in_plot(stats.tempo_mins, variable)
-    draw_in_plot(stats.tempo_meds, variable)
-    draw_in_plot(stats.tempo_maxs, variable)
-    save_plot(variable_name + "_times", variable_name, "Time", title)
-    draw_in_plot(stats.n_mensagens_mins, variable)
-    draw_in_plot(stats.n_mensagens_meds, variable)
-    draw_in_plot(stats.n_mensagens_maxs, variable)
-    save_plot(variable_name + "_n_messages", variable_name, "Number Of messages", title)
+def create_plots(stats: Simulator_Statistics, variable, variable_name: string, title, results_name: string = "", tempo = True, mensagens = True):
+    if tempo:
+        draw_in_plot(stats.tempo_mins, variable)
+        draw_in_plot(stats.tempo_meds, variable)
+        draw_in_plot(stats.tempo_maxs, variable)
+        save_plot(title + "_" + variable_name + "_times", variable_name, "Time", title)
+    if mensagens:
+        draw_in_plot(stats.n_mensagens_mins, variable)
+        draw_in_plot(stats.n_mensagens_meds, variable)
+        draw_in_plot(stats.n_mensagens_maxs, variable)
+        save_plot(title + "_" + variable_name + "_n_messages", variable_name, "Number Of messages", title)
     if stats.results_mins != None:
         draw_in_plot(stats.results_mins, variable)
         draw_in_plot(stats.results_meds, variable)
         draw_in_plot(stats.results_maxs, variable)
-        save_plot(variable_name + "_results", variable_name, results_name, title)
+        save_plot(title + "_" + variable_name + "_" + results_name, variable_name, results_name, title)
