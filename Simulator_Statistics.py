@@ -7,13 +7,16 @@ import pylab
 import discrete_event_simulator
 
 class Run_Statistics:
-    def __init__(self, tempo_min, tempo_med, tempo_max, n_mensagens_min, n_mensagens_med, n_mensagens_max ):
+    def __init__(self, tempo_min, tempo_med, tempo_max, n_mensagens_min, n_mensagens_med, n_mensagens_max , results_min, results_med, results_max):
         self.tempo_min = tempo_min
         self.tempo_med = tempo_med
         self.tempo_max = tempo_max
         self.n_mensagens_min = n_mensagens_min
         self.n_mensagens_med = n_mensagens_med
         self.n_mensagens_max = n_mensagens_max
+        self.results_min = results_min
+        self.results_med = results_med
+        self.results_max = results_max
 
 
 class Simulator_Statistics:
@@ -25,6 +28,9 @@ class Simulator_Statistics:
         self.n_mensagens_mins = []
         self.n_mensagens_meds = []
         self.n_mensagens_maxs = []
+        self.results_mins = []
+        self.results_meds = []
+        self.results_maxs = []
 
     def add_statistic(self, statistic: Run_Statistics):
         self.tempo_mins.append(statistic.tempo_min)
@@ -33,6 +39,9 @@ class Simulator_Statistics:
         self.n_mensagens_mins.append(statistic.n_mensagens_min)
         self.n_mensagens_meds.append(statistic.n_mensagens_med)
         self.n_mensagens_maxs.append(statistic.n_mensagens_max)
+        self.results_mins.append(statistic.results_min)
+        self.results_meds.append(statistic.results_med)
+        self.results_maxs.append(statistic.results_max)
 
     def clear(self):
         self.tempo_mins = []
@@ -41,31 +50,39 @@ class Simulator_Statistics:
         self.n_mensagens_mins = []
         self.n_mensagens_meds = []
         self.n_mensagens_maxs = []
+        self.results_mins = []
+        self.results_meds = []
+        self.results_maxs = []
 
     def multiple_runs(self, simulator: discrete_event_simulator, n_iter: int):
         times = []
         n_messages = []
+        results = []
         logger_file = simulator.get_logger_file()
         if logger_file is not None:
             logger_id = logger_file
             setup_logger(logger_id, logger_file)
-        for _ in range(n_iter):
+        for i in range(n_iter):
             simulator.start()
             num_events = len(simulator.get_message_events())
-            print(num_events)
             last_event = simulator.get_events()[num_events - 1]
             (last_time, _) = last_event
             n_messages.append(num_events)
             times.append(last_time)
+            results.append(simulator.result())
+            print(round((i / n_iter) * 100, 1), "%")
         tempo_min = min(times)
         tempo_med = statistics.mean(times)
         tempo_max = max(times)
         n_mensagens_min = min(n_messages)
         n_mensagens_med = statistics.mean(n_messages)
         n_mensagens_max = max(n_messages)
+        results_min = min(map(lambda r: r[0], results)) if len(results) > 0 else None
+        results_med = statistics.mean(map(lambda r: r[1], results)) if len(results) > 0 else None
+        results_max = max(map(lambda r: r[2], results)) if len(results) > 0 else None
         if logger_file is not None:
             self.print_logs(logger_file, times, n_messages)
-        return Run_Statistics(tempo_min, tempo_med, tempo_max, n_mensagens_min, n_mensagens_med, n_mensagens_max)
+        return Run_Statistics(tempo_min, tempo_med, tempo_max, n_mensagens_min, n_mensagens_med, n_mensagens_max, results_min, results_med, results_max)
 
     def print_logs(self, logger_id: string, times, n_messages):
         tempo_min = min(times)
@@ -87,11 +104,14 @@ class Simulator_Analyzer:
         self.simulator_statistics = Simulator_Statistics()
 
     def analyze_variable(self, var_name: string, variable_values, simulators: [discrete_event_simulator],
-                         n_runs: int, title=""):
+                         n_runs: int, title="", results_name=""):
+        num_simulations = 0
         for simulator in simulators:
             statistics_from_runs = self.simulator_statistics.multiple_runs(simulator, n_runs)
             self.simulator_statistics.add_statistic(statistics_from_runs)
-        create_plots(self.simulator_statistics, variable_values, var_name, title)
+            num_simulations += 1
+            print("Completed ", num_simulations , "/" , len(simulators))
+        create_plots(self.simulator_statistics, variable_values, var_name, title, results_name=results_name)
         self.simulator_statistics.clear()
 
 
@@ -125,7 +145,7 @@ def save_plot(name, x_label, y_label, title):
     pylab.clf()
 
 
-def create_plots(stats: Simulator_Statistics, variable, variable_name: string, title):
+def create_plots(stats: Simulator_Statistics, variable, variable_name: string, title, results_name: string = ""):
     draw_in_plot(stats.tempo_mins, variable)
     draw_in_plot(stats.tempo_meds, variable)
     draw_in_plot(stats.tempo_maxs, variable)
@@ -134,3 +154,8 @@ def create_plots(stats: Simulator_Statistics, variable, variable_name: string, t
     draw_in_plot(stats.n_mensagens_meds, variable)
     draw_in_plot(stats.n_mensagens_maxs, variable)
     save_plot(variable_name + "_n_messages", variable_name, "Number Of messages", title)
+    if stats.results_mins != None:
+        draw_in_plot(stats.results_mins, variable)
+        draw_in_plot(stats.results_meds, variable)
+        draw_in_plot(stats.results_maxs, variable)
+        save_plot(variable_name + "_results", variable_name, results_name, title)

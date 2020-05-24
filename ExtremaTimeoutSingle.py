@@ -31,7 +31,7 @@ class ExtremaNode(discrete_event_simulator.Node):
         if self.converged: # Já sabe que o sistema convergiu por isso não precisa de enviar mensagem para todos
             return (self.direct_message(message.src, "CONVERGED"), [])
         if message.body == "CONVERGED": # Acaba de saber que o sistema convergiu e avisa a todos
-            print(message.to, "CONVERGED")
+            #print(message.to, "CONVERGED")
             self.converged = True
             msgs = self.broadcast_messages("CONVERGED")
             return (msgs, [])
@@ -44,14 +44,13 @@ class ExtremaNode(discrete_event_simulator.Node):
         else:
             timeout_event = []
         msgs = self.broadcast_messages(self.x)
-        print(time, message.to)
         return (msgs, timeout_event)
 
     def handle_event(self, event: discrete_event_simulator.SelfEvent, time):
         if time < self.timeout_time: # Existe um timeout posterior, por isso, este deixa de ter efeito
-            print("FAKE TIMEOUT " + str(self.node))
+            #print("FAKE TIMEOUT " + str(self.node))
             return ([], self.set_timeout(time, None))
-        print("TIMEOUT " + str(self.node))
+        #print("TIMEOUT " + str(self.node))
         msgs = self.broadcast_messages(self.x)
         timeout_event = self.set_timeout(time, None)
         return (msgs, timeout_event)
@@ -74,9 +73,9 @@ class ExtremaNode(discrete_event_simulator.Node):
         return [(self.timeout, discrete_event_simulator.SelfEvent(self.node, body))]
 
 class ExtremaNodeQuery(ExtremaNode):
-    def __init__(self, node, neighbours, K: int, T: int, emit, drop_chance = 0.0, r = 1, timeout = 1):
+    def __init__(self, node, neighbours, K: int, T: int, answer, drop_chance = 0.0, r = 1, timeout = 1):
         super().__init__(node, neighbours, K, T, drop_chance, r, timeout)
-        self.emit = emit
+        self.answer = answer
 
     def start(self):
         return super().start()
@@ -93,11 +92,10 @@ class ExtremaNodeQuery(ExtremaNode):
         else:
             self.nonews += 1
         # TODO: basear o T em relação ao número de vizinhos?
-        print(self.nonews)
+        #print("No news:", self.nonews)
         if self.nonews >= self.T:
             self.N = (self.K - 1) / sum(self.x) # unbiased estimator of N with exponential distribution
             # variance = (N**2) / (self.K - 2)
-            self.emit(time, self.N)
             return None
         # TODO: enviar mensagens apenas quando existe alteração?
         else:
@@ -108,8 +106,8 @@ class ExtremaNodeQuery(ExtremaNode):
             msgs = self.broadcast_messages(self.x)
             return (msgs, timeout_event)
         
-        def result(self):
-            return self.N
+    def result(self):
+        return (abs(self.N - self.answer) / self.answer) * 100
         
     
     
@@ -143,12 +141,12 @@ def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug 
         neighbours = list(graph.neighbors(node))
         if first:
             print(neighbours)
-            graph_node = ExtremaNodeQuery(node, neighbours, K, T, lambda time, n : print(">>>", time, n), drop_chance = 0.0, timeout=max_dist)
+            graph_node = ExtremaNodeQuery(node, neighbours, K, T, n, drop_chance = 0.0, timeout=max_dist)
             first = False
         else:
             graph_node = ExtremaNode(node, neighbours, K, T, drop_chance = 0.0, timeout=max_dist)
         nodes.append(graph_node)
-    simulator = UnstableNetworkSimulator(nodes, dists, max_dist=max_dist, timeout=timeout, network_change_time=10, debug=True)
+    simulator = UnstableNetworkSimulator(nodes, dists, max_dist=max_dist, timeout=timeout, network_change_time=10)
     simulator.start()
     return simulator
 
@@ -176,11 +174,11 @@ def floods(n_iter):
 
 
 analyser = Simulator_Analyzer()
-range_n = range(5, 15, 5)
+range_n = range(10, 100, 10)
 simulators = []
 for n in range_n:
     simulators.append(simulatorGenerator(n, 15, 15, max_dist=20))
 
-analyser.analyze_variable("Number of Nodes", range_n, simulators, 10, title="Extrema Propagation Timeout Single Start")
+analyser.analyze_variable("Number of Nodes", range_n, simulators, 100, title="Erro %")
 
 print("Fim!!")

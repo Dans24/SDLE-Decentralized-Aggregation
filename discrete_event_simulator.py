@@ -91,8 +91,8 @@ class Simulator:
     def result(self):
         getResult = lambda node : node.result()
         hasResult = lambda result : result != None
-        results = filter(hasResult, map(getResult, self.nodes))
-        if len(list(results)) > 0:
+        results = list(filter(hasResult, map(getResult, self.nodes)))
+        if len(results) > 0:
             return (min(results), sum(results) / len(results), max(results))
         else:
             return None
@@ -109,11 +109,10 @@ class Simulator:
                 self.put_event(self_event)
 
         while not self.isConverged() or not self.events.empty():
-            for node in self.nodes:
-                print( str(node.node) + " is " + str(node.converged))
             (time, event) = self.events.get()
             if time > self.current_time:
-                print(time)
+                if debug:
+                    print(time)
             self.current_time = time
             if debug:
                 print(time, str(event))
@@ -145,7 +144,6 @@ class Simulator:
             if not node.converged:
                 convergence = False
                 break
-        print("Convergence is " + str(convergence))
         return convergence
 
     def get_message_events(self) -> List[Tuple[int, Event]]:
