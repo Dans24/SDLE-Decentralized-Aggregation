@@ -108,7 +108,7 @@ class Simulator:
             for self_event in new_self_events:
                 self.put_event(self_event)
 
-        while not self.isConverged() or not self.events.empty():
+        while not (self.isConverged() or self.events.empty()):
             (time, event) = self.events.get()
             if time > self.current_time:
                 if debug:
@@ -144,6 +144,7 @@ class Simulator:
             if not node.converged:
                 convergence = False
                 break
+        print("Convergence is " + str(convergence))
         return convergence
 
     def get_message_events(self) -> List[Tuple[int, Event]]:
