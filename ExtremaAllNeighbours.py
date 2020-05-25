@@ -53,7 +53,7 @@ class ExtremaNode(discrete_event_simulator.Node):
             if not self.converged:
                 N = (self.K - 1) / sum(self.x)
                 variance = (N**2) / (self.K - 2)
-                print("Node ", self.node, " :: Result: " , N, " ± ", (variance**(1/2)) * 3)
+                # print("Node ", self.node, " :: Result: " , N, " ± ", (variance**(1/2)) * 3)
             else:
                 msgs.append(discrete_event_simulator.Message(self.node, message.src, self.x))
                 #msgs = self.broadcast_messages(self.x)
@@ -145,7 +145,7 @@ def floods(n_iter):
     for _ in range(n_iter):
         simulator = simulatorGenerator(n, K, T, max_dist=20)
         num_events = len(simulator.get_message_events())
-        print(num_events)
+        # print(num_events)
         last_event = simulator.get_events()[num_events - 1]
         (last_time, _) = last_event
         n_messages.append(num_events)

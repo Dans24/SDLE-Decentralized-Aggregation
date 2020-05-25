@@ -70,7 +70,7 @@ class Simulator_Statistics:
             n_messages.append(num_events)
             times.append(last_time)
             results.append(simulator.result())
-            print(round((i / n_iter) * 100, 1), "%")
+            print(round((i / n_iter) * 100, 1), "%", end="\r")
         tempo_min = min(times)
         tempo_med = statistics.mean(times)
         tempo_max = max(times)
