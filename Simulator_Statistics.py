@@ -54,6 +54,39 @@ class Simulator_Statistics:
         self.results_meds = []
         self.results_maxs = []
 
+
+    def multiple_runs_with_generator(self, n_iter, gen, args):
+        times = []
+        n_messages = []
+        results = []
+        for i in range(n_iter):
+            # logger_file = simulator.get_logger_file()
+            # if logger_file is not None:
+            #    logger_id = logger_file
+            #    setup_logger(logger_id, logger_file)
+            simulator = gen(args[0], args[1])
+            simulator.start()
+            num_events = len(simulator.get_message_events())
+            last_event = simulator.get_events()[num_events - 1]
+            (last_time, _) = last_event
+            n_messages.append(num_events)
+            times.append(last_time)
+            results.append(simulator.result())
+            print(round((i / n_iter) * 100, 1), "%")
+        tempo_min = min(times)
+        tempo_med = statistics.mean(times)
+        tempo_max = max(times)
+        n_mensagens_min = min(n_messages)
+        n_mensagens_med = statistics.mean(n_messages)
+        n_mensagens_max = max(n_messages)
+        results_min = min(map(lambda r: r[0], results)) if len(results) > 0 else None
+        results_med = statistics.mean(map(lambda r: r[1], results)) if len(results) > 0 else None
+        results_max = max(map(lambda r: r[2], results)) if len(results) > 0 else None
+        # if logger_file is not None:
+        #    self.print_logs(logger_file, times, n_messages)
+        return Run_Statistics(tempo_min, tempo_med, tempo_max, n_mensagens_min, n_mensagens_med, n_mensagens_max,
+                              results_min, results_med, results_max)
+
     def multiple_runs(self, simulator: [discrete_event_simulator]):
         n_iter = len(simulator)
         times = []
@@ -115,6 +148,14 @@ class Simulator_Analyzer:
         create_plots(self.simulator_statistics, variable_values, var_name, title, results_name=results_name)
         self.simulator_statistics.clear()
 
+    def analyze_gen_variable(self, var_name : string, variable_values, simulatorGen, argss : ([],[]),
+                             n_runs: int, title="", results_name=""):
+        for args in argss:
+            print(str(args))
+            statistics_from_runs = self.simulator_statistics.multiple_runs_with_generator(n_runs, simulatorGen, args)
+            self.simulator_statistics.add_statistic(statistics_from_runs)
+        create_plots(self.simulator_statistics, variable_values, var_name, title, results_name=results_name)
+        self.simulator_statistics.clear()
 
 def setup_logger(logger_name, log_file, level=logging.INFO):
     log_setup = logging.getLogger(logger_name)

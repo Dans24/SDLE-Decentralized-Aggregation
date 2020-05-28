@@ -115,29 +115,6 @@ def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug 
     simulator.start()
     return simulator
 
-def floods(n_iter):
-    n = 10
-    K = 100
-    T = 20
-    times = []
-    n_messages = []
-    for _ in range(n_iter):
-        simulator = simulatorGenerator(n, K, T, max_dist=20)
-        num_events = len(simulator.get_message_events())
-        print(num_events)
-        last_event = simulator.get_events()[num_events - 1]
-        (last_time, _) = last_event
-        n_messages.append(num_events)
-        times.append(last_time)
-    print("Tempo mínimo: " + str(min(times)))
-    print("Tempo médio: " + str(statistics.mean(times)))
-    print("Tempo máximo: " + str(max(times)))
-    print()
-    print("Numero mensagens minimo: " + str(min(n_messages)))
-    print("Numero mensagens médio: " + str(statistics.mean(n_messages)))
-    print("Numero mensagens máximo: " + str(max(n_messages)))
-
-
 analyser = Simulator_Analyzer()
 range_n = range(5, 10)
 simulators = []
