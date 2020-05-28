@@ -1,6 +1,8 @@
 import discrete_event_simulator, gen_Graphs
 import random
 import statistics
+import threading
+from multiprocessing.pool import ThreadPool
 from Simulator_Statistics import Simulator_Analyzer
 
 """
@@ -229,16 +231,36 @@ def floods(n_iter):
 
 analyser = Simulator_Analyzer()
 
-range_n = range(10, 101, 10)
+range_n = list(range(10, 101, 10))
 simulators = []
 iters = 25
 print("A carregar simuladores...")
+"""
+def fill(simulators, i, n, iters):
+    round = []
+    print("A começar", n)
+    for m in range(iters):
+        round.append(simulatorGenerator(n, 100, 50, max_dist=20, drop_chance = 0.2))
+    simulators[i] = round
+    print("Terminou ", n)
+
+threads = []
+pool = ThreadPool(len(range_n))
+for n in range_n:
+    simulators.append(None)
+    pool.apply_async(fill, args=(simulators, len(simulators) - 1, n, iters,))
+
+pool.close()
+pool.join()
+print()
+"""
 for n in range_n:
     round = []
     for m in range(iters):
         round.append(simulatorGenerator(n, 100, 50, max_dist=20, drop_chance = 0.2))
     simulators.append(round)
     print("Ronda carregada:", n)
+
 print("Simuladores carregados...")
 analyser.analyze_variable("Número de nodos", range_n, simulators, 100, title="Extrema Propagation Timeout Single Start K=100 T=50 Drop=20%", results_name="Erro %")
 
