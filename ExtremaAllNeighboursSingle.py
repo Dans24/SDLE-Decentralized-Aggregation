@@ -8,9 +8,9 @@ from Simulator_Statistics import Simulator_Analyzer
     Semelhante ao ExtremaTimeout mas espera pela mensagens de todos os vizinhos para enviar o seu x
 """
 class ExtremaNodeQuery(discrete_event_simulator.Node):
-    def __init__(self, node, neighbours, K: int, T: int, drop_chance = 0.0, r = 1, timeout = 1):
+    def __init__(self, node, neighbors, K: int, T: int, answer, drop_chance = 0.0, r = 1, timeout = 1):
         self.node = node
-        self.neighbours = neighbours
+        self.neighbors = neighbors
         self.K = K
         self.T = T
         self.r = r
@@ -20,9 +20,10 @@ class ExtremaNodeQuery(discrete_event_simulator.Node):
         self.gotFrom = []
         self.converged = False
         self.debug = False
+        self.answer = answer
         
     def start(self):
-        self.nonews = 0
+        self.no_news = 0
         self.x = []
         for _ in range(self.K):
             self.x.append(self.r * random.expovariate(1))
@@ -51,11 +52,11 @@ class ExtremaNodeQuery(discrete_event_simulator.Node):
                     print("me: " + str(message.to) + " src:" + str(message.src) + " current array: " + str(self.gotFrom) + " neighbours: " + str(self.neighbours))
                 else:
                     print("me:" + str(self.node) + " Converged")
-            if len(self.gotFrom) == len(self.neighbours):
-                self.nonews += 1
+            if len(self.gotFrom) == len(self.neighbors):
+                self.no_news += 1
                 self.gotFrom.clear()
 
-        if self.nonews >= self.T:
+        if self.no_news >= self.T:
             msgs = []
             if not self.converged:
                 self.N = (self.K - 1) / sum(self.x)
@@ -94,16 +95,16 @@ class ExtremaNodeQuery(discrete_event_simulator.Node):
 
     def broadcast_messages(self, body):
         msgs = []
-        for neighbour in self.neighbours:
+        for neighbor in self.neighbors:
             if random.random() > self.drop_chance:
-                msgs.append(discrete_event_simulator.Message(self.node, neighbour, body))
+                msgs.append(discrete_event_simulator.Message(self.node, neighbor, body))
         return msgs
     
     def missingN_messages(self, body):
         msgs = []
-        for neighbour in self.neighbours:
-            if neighbour not in self.gotFrom:
-                msgs.append(discrete_event_simulator.Message(self.node, neighbour, body))
+        for neighbor in self.neighbors:
+            if neighbor not in self.gotFrom:
+                msgs.append(discrete_event_simulator.Message(self.node, neighbor, body))
         return msgs
     
     def set_timeout(self, time, body):
@@ -114,9 +115,9 @@ class ExtremaNodeQuery(discrete_event_simulator.Node):
         return (abs(self.N - self.answer) / self.answer) * 100
 
 class ExtremaNode(discrete_event_simulator.Node):
-    def __init__(self, node, neighbours, K: int, T: int, drop_chance = 0.0, r = 1, timeout = 1):
+    def __init__(self, node, neighbors, K: int, T: int, answer, drop_chance = 0.0, r = 1, timeout = 1):
         self.node = node
-        self.neighbours = neighbours
+        self.neighbors = neighbors
         self.K = K
         self.T = T
         self.r = r
@@ -126,6 +127,7 @@ class ExtremaNode(discrete_event_simulator.Node):
         self.gotFrom = []
         self.converged = False
         self.debug = False
+        self.answer = answer
         
     def start(self):
         self.x = []
@@ -223,7 +225,7 @@ class UnstableNetworkSimulator(discrete_event_simulator.Simulator):
             self.distances[node][node] = self.timeout
         return []
 
-def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug = False):
+def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug = False, drop_chance = 0.0):
     graph = gen_Graphs.random_graph(n)
     dists = [[0 for _ in range(n)] for _ in range(n)] # fill matrix with zeroes
     nodes = []
@@ -231,16 +233,16 @@ def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug 
     for node in graph.nodes:
         neighbours = list(graph.neighbors(node))
         if first:
-            graph_node = ExtremaNodeQuery(node, neighbours, K, T, 0, (False, nodes), drop_chance = 0.0, timeout=max_dist)
+            graph_node = ExtremaNodeQuery(node, neighbours, K, T, n, drop_chance = drop_chance, timeout=max_dist)
             first = False
         else:
-            graph_node = ExtremaNode(node, neighbours, K, T, 0, (False, nodes), drop_chance = 0.0, timeout=max_dist)
-        graph_node = ExtremaNode(node, neighbours, K, None, drop_chance = 0.0, timeout=max_dist)
+            graph_node = ExtremaNode(node, neighbours, K, T, n, drop_chance = drop_chance, timeout=max_dist)
         nodes.append(graph_node)
     simulator = UnstableNetworkSimulator(nodes, dists, max_dist=max_dist, timeout=timeout, network_change_time=10, debug=True)
     simulator.start()
     return simulator
 
+"""
 def simulatorGeneratorT(n, K, max_dist = 0, timeout = 0, fanout = None, debug = False):
     graph = gen_Graphs.random_graph(n)
     dists = [[0 for _ in range(n)] for _ in range(n)] # fill matrix with zeroes
@@ -257,12 +259,13 @@ def simulatorGeneratorT(n, K, max_dist = 0, timeout = 0, fanout = None, debug = 
     simulator = UnstableNetworkSimulator(nodes, dists, max_dist=max_dist, timeout=timeout, network_change_time=10, debug=True)
     simulator.start()
     return simulator
+"""
 
 def simulatorGeneratorArgs(*args):
     return simulatorGenerator(args[0][0], args[0][1], args[0][2],  max_dist=args[1].get("max_dist"), drop_chance=args[1].get("drop_chance"))
 
-def simulatorGeneratorTArgs(*args):
-    return simulatorGeneratorT(args[0][0], args[0][1], max_dist=args[1].get("max_dist"), drop_chance=args[1].get("drop_chance"))
+#def simulatorGeneratorTArgs(*args):
+#    return simulatorGeneratorT(args[0][0], args[0][1], max_dist=args[1].get("max_dist"), drop_chance=args[1].get("drop_chance"))
 
 analyser = Simulator_Analyzer()
 range_n = range(10, 151, 10)
@@ -270,9 +273,9 @@ range_n = range(10, 151, 10)
 kwargs = []
 for n in range_n:
     args = (n, 100, 25)
-    kwarg = {"max_dist": 20, "drop_chance": 0.2}
+    kwarg = {"max_dist": 20, "drop_chance": 0}
     kwargs.append((args, kwarg))
 analyser.analyze_gen_variable("Número de nodos", range_n, simulatorGeneratorArgs, kwargs, 100,  title="Extrema Propagation K=100 T=25% Drop=20%", results_name="Erro relativo (%)")
-analyser.analyze_gen_variable("Número de nodos", range_n, simulatorGeneratorTArgs, kwargs, 100,  title="Extrema Propagation K=100 Drop=20%", results_name="T")
+#analyser.analyze_gen_variable("Número de nodos", range_n, simulatorGeneratorTArgs, kwargs, 100,  title="Extrema Propagation K=100 Drop=20%", results_name="T")
 
 print("Fim!!")

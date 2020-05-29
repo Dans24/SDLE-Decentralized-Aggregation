@@ -10,9 +10,9 @@ Semelhante ao ExtremaTimeout mas apenas um dos nodos é que faz as queries.
 """
 
 class ExtremaNode(discrete_event_simulator.Node):
-    def __init__(self, node, neighbours, K: int, T: int, drop_chance = 0.0, r = 1, timeout = 1):
+    def __init__(self, node, neighbors, K: int, T: int, drop_chance = 0.0, r = 1, timeout = 1):
         self.node = node
-        self.neighbours = neighbours
+        self.neighbors = neighbors
         self.K = K
         self.T = T
         self.r = r
@@ -22,7 +22,6 @@ class ExtremaNode(discrete_event_simulator.Node):
         
     def start(self):
         self.converged = False
-        self.nonews = 0
         self.x = []
         for _ in range(self.K):
             self.x.append(self.r * random.expovariate(1))
@@ -53,13 +52,13 @@ class ExtremaNode(discrete_event_simulator.Node):
 
     def broadcast_messages(self, body):
         msgs = []
-        for neighbour in self.neighbours:
+        for neighbour in self.neighbors:
             if random.random() > self.drop_chance:
                 msgs.append(discrete_event_simulator.Message(self.node, neighbour, body))
         return msgs
 
     def direct_message(self, to, body):
-        if to in self.neighbours: # É vizinho, pode mandar a mensagem
+        if to in self.neighbors: # É vizinho, pode mandar a mensagem
             return [discrete_event_simulator.Message(self.node, to, body)]
         else: # Não é vizinho, não pode mandar a mensagem
             return []
@@ -69,8 +68,8 @@ class ExtremaNode(discrete_event_simulator.Node):
         return [(self.timeout, discrete_event_simulator.SelfEvent(self.node, body))]
 
 class ExtremaNodeQuery(ExtremaNode):
-    def __init__(self, node, neighbours, K: int, T: int, answer, drop_chance = 0.0, r = 1, timeout = 1):
-        super().__init__(node, neighbours, K, T, drop_chance, r, timeout)
+    def __init__(self, node, neighbors, K: int, T: int, answer, drop_chance = 0.0, r = 1, timeout = 1):
+        super().__init__(node, neighbors, K, T, drop_chance, r, timeout)
         self.answer = answer
 
     def start(self):
@@ -84,12 +83,12 @@ class ExtremaNodeQuery(ExtremaNode):
                 self.x[i] = message.body[i]
                 changed = True
         if changed:
-            self.nonews = 0
+            self.no_news = 0
         else:
-            self.nonews += 1
+            self.no_news += 1
         # TODO: basear o T em relação ao número de vizinhos?
         #print("No news:", self.nonews)
-        if self.nonews >= self.T:
+        if self.no_news >= self.T:
             self.N = (self.K - 1) / sum(self.x) # unbiased estimator of N with exponential distribution
             # variance = (N**2) / (self.K - 2)
             return None
@@ -180,12 +179,12 @@ def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug 
     nodes = []
     first = True
     for node in graph.nodes:
-        neighbours = list(graph.neighbors(node))
+        neighbors = list(graph.neighbors(node))
         if first:
-            graph_node = ExtremaNodeQuery(node, neighbours, K, T, n, drop_chance = drop_chance, timeout=max_dist)
+            graph_node = ExtremaNodeQuery(node, neighbors, K, T, n, drop_chance = drop_chance, timeout=max_dist)
             first = False
         else:
-            graph_node = ExtremaNode(node, neighbours, K, T, drop_chance = 0.0, timeout=max_dist)
+            graph_node = ExtremaNode(node, neighbors, K, T, drop_chance = 0.0, timeout=max_dist)
         nodes.append(graph_node)
     simulator = UnstableNetworkSimulator(nodes, dists, max_dist=max_dist, timeout=timeout, network_change_time=10)
     simulator.start()
@@ -265,7 +264,7 @@ for n in range_n:
     args = (n, 100, 25)
     kwarg = {"max_dist": 20, "drop_chance": 0.2}
     kwargs.append((args, kwarg))
-analyser.analyze_gen_variable("Número de nodos", range_n, simulatorGeneratorArgs, kwargs, 100,  title="Extrema Propagation No Wait K=100 T=25% Drop=20%", results_name="Erro relativo (%)")
+analyser.analyze_gen_variable("Número de nodos", range_n, simulatorGeneratorArgs, kwargs, 100,  title="Extrema Propagation No Wait K=100 T=25 Drop=20%", results_name="Erro relativo (%)")
 analyser.analyze_gen_variable("Número de nodos", range_n, simulatorGeneratorTArgs, kwargs, 100,  title="Extrema Propagation No Wait K=100 Drop=20%", results_name="T")
 
 print("Fim!!")

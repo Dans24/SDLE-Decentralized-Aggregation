@@ -10,9 +10,9 @@ Semelhante ao ExtremaTimeout mas apenas um dos nodos é que faz as queries.
 """
 
 class ExtremaNode(discrete_event_simulator.Node):
-    def __init__(self, node, neighbours, K: int, T: int, drop_chance = 0.0, r = 1, timeout = 1):
+    def __init__(self, node, neighbors, K: int, T: int, drop_chance = 0.0, r = 1, timeout = 1):
         self.node = node
-        self.neighbours = neighbours
+        self.neighbors = neighbors
         self.K = K
         self.T = T
         self.r = r
@@ -22,7 +22,6 @@ class ExtremaNode(discrete_event_simulator.Node):
         
     def start(self):
         self.converged = False
-        self.nonews = 0
         self.x = []
         for _ in range(self.K):
             self.x.append(self.r * random.expovariate(1))
@@ -53,9 +52,9 @@ class ExtremaNode(discrete_event_simulator.Node):
 
     def broadcast_messages(self, body):
         msgs = []
-        for neighbour in self.neighbours:
+        for neighbor in self.neighbors:
             if random.random() > self.drop_chance:
-                msgs.append(discrete_event_simulator.Message(self.node, neighbour, body))
+                msgs.append(discrete_event_simulator.Message(self.node, neighbor, body))
         return msgs
 
     def direct_message(self, to, body):
@@ -84,12 +83,12 @@ class ExtremaNodeQuery(ExtremaNode):
                 self.x[i] = message.body[i]
                 changed = True
         if changed:
-            self.nonews = 0
+            self.no_news = 0
         else:
-            self.nonews += 1
+            self.no_news += 1
         # TODO: basear o T em relação ao número de vizinhos?
         #print("No news:", self.nonews)
-        if self.nonews >= self.T:
+        if self.no_news >= self.T:
             self.N = (self.K - 1) / sum(self.x) # unbiased estimator of N with exponential distribution
             # variance = (N**2) / (self.K - 2)
             return None
