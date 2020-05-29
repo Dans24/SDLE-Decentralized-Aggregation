@@ -35,7 +35,7 @@ class RootNode(GraphNode):
 def simulatorGenerator(n, max_dist = 0, fanout = None):
     rootId = random.randrange(n)
     graph = gen_Graphs.random_graph(n)
-    neighbours = graph.neighbors(rootId)
+    neighbours = graph.neighbours(rootId)
     root = RootNode(rootId, neighbours, fanout)
     nodes = [root]
     dists = [[0 for _ in range(n)] for _ in range(n)] # fill matrix with zeroes
@@ -43,7 +43,7 @@ def simulatorGenerator(n, max_dist = 0, fanout = None):
         for neighbour in graph.nodes:
             dists[node][neighbour] = random.randrange(max_dist) + 1
         dists[node][node] = 0
-        neighbours = graph.neighbors(node)
+        neighbours = graph.neighbours(node)
         if rootId != node:
             graph_node = GraphNode(node, neighbours, fanout)
             nodes.append(graph_node)

@@ -10,9 +10,9 @@ Semelhante ao ExtremaTimeout mas apenas um dos nodos é que faz as queries.
 """
 
 class ExtremaNode(discrete_event_simulator.Node):
-    def __init__(self, node, neighbors, K: int, T: int, drop_chance = 0.0, r = 1, timeout = 1):
+    def __init__(self, node, neighbours, K: int, T: int, drop_chance = 0.0, r = 1, timeout = 1):
         self.node = node
-        self.neighbors = neighbors
+        self.neighbours = neighbours
         self.K = K
         self.T = T
         self.r = r
@@ -52,13 +52,13 @@ class ExtremaNode(discrete_event_simulator.Node):
 
     def broadcast_messages(self, body):
         msgs = []
-        for neighbour in self.neighbors:
+        for neighbour in self.neighbours:
             if random.random() > self.drop_chance:
                 msgs.append(discrete_event_simulator.Message(self.node, neighbour, body))
         return msgs
 
     def direct_message(self, to, body):
-        if to in self.neighbors: # É vizinho, pode mandar a mensagem
+        if to in self.neighbours: # É vizinho, pode mandar a mensagem
             return [discrete_event_simulator.Message(self.node, to, body)]
         else: # Não é vizinho, não pode mandar a mensagem
             return []
@@ -68,8 +68,8 @@ class ExtremaNode(discrete_event_simulator.Node):
         return [(self.timeout, discrete_event_simulator.SelfEvent(self.node, body))]
 
 class ExtremaNodeQuery(ExtremaNode):
-    def __init__(self, node, neighbors, K: int, T: int, answer, drop_chance = 0.0, r = 1, timeout = 1):
-        super().__init__(node, neighbors, K, T, drop_chance, r, timeout)
+    def __init__(self, node, neighbours, K: int, T: int, answer, drop_chance = 0.0, r = 1, timeout = 1):
+        super().__init__(node, neighbours, K, T, drop_chance, r, timeout)
         self.answer = answer
 
     def start(self):
@@ -165,7 +165,7 @@ class UnstableNetworkSimulator(discrete_event_simulator.Simulator):
             print("Update network")
         graph = gen_Graphs.random_graph(len(self.nodes))
         for node in graph.nodes:
-            self.nodes[node].neighbours = list(graph.neighbors(node))
+            self.nodes[node].neighbours = list(graph.neighbours(node))
             for neighbour in self.nodes[node].neighbours:
                 self.distances[node][neighbour] = random.randrange(1, self.max_dist + 1)
                 #if self.debug:
@@ -179,12 +179,12 @@ def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug 
     nodes = []
     first = True
     for node in graph.nodes:
-        neighbors = list(graph.neighbors(node))
+        neighbours = list(graph.neighbours(node))
         if first:
-            graph_node = ExtremaNodeQuery(node, neighbors, K, T, n, drop_chance = drop_chance, timeout=max_dist)
+            graph_node = ExtremaNodeQuery(node, neighbours, K, T, n, drop_chance = drop_chance, timeout=max_dist)
             first = False
         else:
-            graph_node = ExtremaNode(node, neighbors, K, T, drop_chance = 0.0, timeout=max_dist)
+            graph_node = ExtremaNode(node, neighbours, K, T, drop_chance = 0.0, timeout=max_dist)
         nodes.append(graph_node)
     simulator = UnstableNetworkSimulator(nodes, dists, max_dist=max_dist, timeout=timeout, network_change_time=10)
     simulator.start()
@@ -196,7 +196,7 @@ def simulatorGeneratorT(n, K, max_dist = 0, timeout = 0, fanout = None, debug = 
     nodes = []
     first = True
     for node in graph.nodes:
-        neighbours = list(graph.neighbors(node))
+        neighbours = list(graph.neighbours(node))
         if first:
             graph_node = ExtremaNodeQueryT(node, neighbours, K, 0, (False, nodes), drop_chance = 0.0, timeout=max_dist)
             first = False

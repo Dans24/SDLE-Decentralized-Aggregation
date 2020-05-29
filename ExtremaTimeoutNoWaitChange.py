@@ -10,9 +10,9 @@ Semelhante ao ExtremaTimeout mas apenas um dos nodos é que faz as queries.
 """
 
 class ExtremaNode(discrete_event_simulator.Node):
-    def __init__(self, node, neighbors, K: int, T: int, drop_chance = 0.0, r = 1, timeout = 1):
+    def __init__(self, node, neighbours, K: int, T: int, drop_chance = 0.0, r = 1, timeout = 1):
         self.node = node
-        self.neighbors = neighbors
+        self.neighbours = neighbours
         self.K = K
         self.T = T
         self.r = r
@@ -52,7 +52,7 @@ class ExtremaNode(discrete_event_simulator.Node):
 
     def broadcast_messages(self, body):
         msgs = []
-        for neighbor in self.neighbors:
+        for neighbor in self.neighbours:
             if random.random() > self.drop_chance:
                 msgs.append(discrete_event_simulator.Message(self.node, neighbor, body))
         return msgs
@@ -171,7 +171,7 @@ class UnstableNetworkSimulator(discrete_event_simulator.Simulator):
             print("Update network")
         graph = gen_Graphs.random_graph(len(self.nodes))
         for node in graph.nodes:
-            self.nodes[node].neighbours = list(graph.neighbors(node))
+            self.nodes[node].neighbours = list(graph.neighbours(node))
             for neighbour in self.nodes[node].neighbours:
                 self.distances[node][neighbour] = random.randrange(1, self.max_dist + 1)
                 #if self.debug:
@@ -185,7 +185,7 @@ def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug 
     nodes = []
     first = True
     for node in graph.nodes:
-        neighbours = list(graph.neighbors(node))
+        neighbours = list(graph.neighbours(node))
         if first:
             graph_node = ExtremaNodeQuery(node, neighbours, K, T, n, drop_chance = drop_chance, timeout=max_dist)
             first = False
@@ -202,7 +202,7 @@ def simulatorGeneratorT(n, K, max_dist = 0, timeout = 0, fanout = None, debug = 
     nodes = []
     first = True
     for node in graph.nodes:
-        neighbours = list(graph.neighbors(node))
+        neighbours = list(graph.neighbours(node))
         if first:
             graph_node = ExtremaNodeQueryT(node, neighbours, K, 0, (False, nodes), drop_chance = 0.0, timeout=max_dist)
             first = False

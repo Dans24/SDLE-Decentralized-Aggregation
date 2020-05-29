@@ -8,9 +8,9 @@ from Simulator_Statistics import Simulator_Analyzer
     Semelhante ao ExtremaTimeout mas espera pela mensagens de todos os vizinhos para enviar o seu x
 """
 class ExtremaNodeQuery(discrete_event_simulator.Node):
-    def __init__(self, node, neighbors, K: int, T: int, answer, drop_chance = 0.0, r = 1, timeout = 1):
+    def __init__(self, node, neighbours, K: int, T: int, answer, drop_chance = 0.0, r = 1, timeout = 1):
         self.node = node
-        self.neighbors = neighbors
+        self.neighbours = neighbours
         self.K = K
         self.T = T
         self.r = r
@@ -52,7 +52,7 @@ class ExtremaNodeQuery(discrete_event_simulator.Node):
                     print("me: " + str(message.to) + " src:" + str(message.src) + " current array: " + str(self.gotFrom) + " neighbours: " + str(self.neighbours))
                 else:
                     print("me:" + str(self.node) + " Converged")
-            if len(self.gotFrom) == len(self.neighbors):
+            if len(self.gotFrom) == len(self.neighbours):
                 self.no_news += 1
                 self.gotFrom.clear()
 
@@ -95,14 +95,14 @@ class ExtremaNodeQuery(discrete_event_simulator.Node):
 
     def broadcast_messages(self, body):
         msgs = []
-        for neighbor in self.neighbors:
+        for neighbor in self.neighbours:
             if random.random() > self.drop_chance:
                 msgs.append(discrete_event_simulator.Message(self.node, neighbor, body))
         return msgs
     
     def missingN_messages(self, body):
         msgs = []
-        for neighbor in self.neighbors:
+        for neighbor in self.neighbours:
             if neighbor not in self.gotFrom:
                 msgs.append(discrete_event_simulator.Message(self.node, neighbor, body))
         return msgs
@@ -115,9 +115,9 @@ class ExtremaNodeQuery(discrete_event_simulator.Node):
         return (abs(self.N - self.answer) / self.answer) * 100
 
 class ExtremaNode(discrete_event_simulator.Node):
-    def __init__(self, node, neighbors, K: int, T: int, answer, drop_chance = 0.0, r = 1, timeout = 1):
+    def __init__(self, node, neighbours, K: int, T: int, answer, drop_chance = 0.0, r = 1, timeout = 1):
         self.node = node
-        self.neighbors = neighbors
+        self.neighbours = neighbours
         self.K = K
         self.T = T
         self.r = r
@@ -217,7 +217,7 @@ class UnstableNetworkSimulator(discrete_event_simulator.Simulator):
             print("Update network")
         graph = gen_Graphs.random_graph(len(self.nodes))
         for node in graph.nodes:
-            self.nodes[node].neighbours = list(graph.neighbors(node))
+            self.nodes[node].neighbours = list(graph.neighbours(node))
             for neighbour in self.nodes[node].neighbours:
                 self.distances[node][neighbour] = random.randrange(1, self.max_dist + 2)
                 if self.debug:
@@ -231,7 +231,7 @@ def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug 
     nodes = []
     first = True
     for node in graph.nodes:
-        neighbours = list(graph.neighbors(node))
+        neighbours = list(graph.neighbours(node))
         if first:
             graph_node = ExtremaNodeQuery(node, neighbours, K, T, n, drop_chance = drop_chance, timeout=max_dist)
             first = False
@@ -249,7 +249,7 @@ def simulatorGeneratorT(n, K, max_dist = 0, timeout = 0, fanout = None, debug = 
     nodes = []
     first = True
     for node in graph.nodes:
-        neighbours = list(graph.neighbors(node))
+        neighbours = list(graph.neighbours(node))
         if first:
             graph_node = ExtremaNodeQueryT(node, neighbours, K, 0, (False, nodes), drop_chance = 0.0, timeout=max_dist)
             first = False
