@@ -22,7 +22,6 @@ class ExtremaNode(discrete_event_simulator.Node):
         
     def start(self):
         self.converged = False
-        self.nonews = 0
         self.x = []
         for _ in range(self.K):
             self.x.append(self.r * random.expovariate(1))
@@ -84,12 +83,12 @@ class ExtremaNodeQuery(ExtremaNode):
                 self.x[i] = message.body[i]
                 changed = True
         if changed:
-            self.nonews = 0
+            self.no_news = 0
         else:
-            self.nonews += 1
+            self.no_news += 1
         # TODO: basear o T em relação ao número de vizinhos?
         #print("No news:", self.nonews)
-        if self.nonews >= self.T:
+        if self.no_news >= self.T:
             self.N = (self.K - 1) / sum(self.x) # unbiased estimator of N with exponential distribution
             # variance = (N**2) / (self.K - 2)
             return None
@@ -166,7 +165,7 @@ class UnstableNetworkSimulator(discrete_event_simulator.Simulator):
             print("Update network")
         graph = gen_Graphs.random_graph(len(self.nodes))
         for node in graph.nodes:
-            self.nodes[node].neighbours = list(graph.neighbors(node))
+            self.nodes[node].neighbours = list(graph.neighbours(node))
             for neighbour in self.nodes[node].neighbours:
                 self.distances[node][neighbour] = random.randrange(1, self.max_dist + 1)
                 #if self.debug:
@@ -265,7 +264,7 @@ for n in range_n:
     args = (n, 100, 25)
     kwarg = {"max_dist": 20, "drop_chance": 0.2}
     kwargs.append((args, kwarg))
-analyser.analyze_gen_variable("Número de nodos", range_n, simulatorGeneratorArgs, kwargs, 100,  title="Extrema Propagation No Wait K=100 T=25% Drop=20%", results_name="Erro relativo (%)")
+analyser.analyze_gen_variable("Número de nodos", range_n, simulatorGeneratorArgs, kwargs, 100,  title="Extrema Propagation No Wait K=100 T=25 Drop=20%", results_name="Erro relativo (%)")
 analyser.analyze_gen_variable("Número de nodos", range_n, simulatorGeneratorTArgs, kwargs, 100,  title="Extrema Propagation No Wait K=100 Drop=20%", results_name="T")
 
 print("Fim!!")
