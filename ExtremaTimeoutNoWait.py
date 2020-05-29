@@ -215,7 +215,7 @@ def simulatorGeneratorTArgs(*args):
     return simulatorGeneratorT(args[0][0], args[0][1], max_dist=args[1].get("max_dist"), drop_chance=args[1].get("drop_chance"))
 
 analyser = Simulator_Analyzer()
-range_n = range(10, 151, 10)
+range_n = range(10, 201, 20)
 '''
 simulators = []
 iters = 25

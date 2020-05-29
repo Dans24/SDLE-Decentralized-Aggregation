@@ -3,8 +3,14 @@ import string
 import logging
 import logging.config
 import pylab
+import matplotlib.patches as mpatches
 
 import discrete_event_simulator
+
+green_patch = mpatches.Patch(color='green', label="Maximum")
+orange_patch = mpatches.Patch(color="orange", label="Average")
+blue_patch = mpatches.Patch(color="blue", label="Minimum")
+
 
 class Run_Statistics:
     def __init__(self, tempo_min, tempo_med, tempo_max, n_mensagens_min, n_mensagens_med, n_mensagens_max , results_min, results_med, results_max):
@@ -183,6 +189,7 @@ def save_plot(name, x_label, y_label, title):
     pylab.xlabel(str(x_label))
     pylab.ylabel(str(y_label))
     pylab.title(str(title))
+    pylab.legend(handles=[green_patch, orange_patch, blue_patch])
     pylab.savefig('./plots/' + name)
     pylab.clf()
 

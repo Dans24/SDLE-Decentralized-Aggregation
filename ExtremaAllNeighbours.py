@@ -145,6 +145,10 @@ def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug 
     simulator.start()
     return simulator
 
+def simulatorGeneratorArgs(*args):
+    return simulatorGenerator(args[0][0], args[0][1], args[0][2],  max_dist=args[1].get("max_dist"))
+
+
 analyser = Simulator_Analyzer()
 range_n = range(5, 10)
 iters = 25
