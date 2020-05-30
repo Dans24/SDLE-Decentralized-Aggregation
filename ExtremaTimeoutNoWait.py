@@ -72,6 +72,7 @@ class ExtremaNodeQuery(ExtremaNode):
         super().__init__(node, neighbours, K, T, drop_chance, r, timeout)
         self.answer = answer
         self.single = single
+        self.no_news = 0
 
     def start(self):
         return super().start()
@@ -168,7 +169,7 @@ class UnstableNetworkSimulator(discrete_event_simulator.Simulator):
             print("Update network")
         graph = gen_Graphs.random_graph(len(self.nodes))
         for node in graph.nodes:
-            self.nodes[node].neighbours = list(graph.neighbours(node))
+            self.nodes[node].neighbours = list(graph.neighbors(node))
             for neighbour in self.nodes[node].neighbours:
                 self.distances[node][neighbour] = random.randrange(1, self.max_dist + 1)
                 #if self.debug:
@@ -197,7 +198,7 @@ def simulatorGeneratorAll(n, K, T, max_dist = 0, timeout = 0, fanout = None, deb
     dists = [[0 for _ in range(n)] for _ in range(n)] # fill matrix with zeroes
     nodes = []
     for node in graph.nodes:
-        neighbours = list(graph.neighbours(node))
+        neighbours = list(graph.neighbors(node))
         graph_node = ExtremaNodeQuery(node, neighbours, K, T, n, drop_chance = drop_chance, timeout=max_dist, single=False)
         nodes.append(graph_node)
     simulator = UnstableNetworkSimulator(nodes, dists, max_dist=max_dist, timeout=timeout, network_change_time=10)
@@ -275,6 +276,8 @@ for n in range_n:
 print("Simuladores carregados...")
 analyser.analyze_variable("Número de nodos", range_n, simulators, 100, title="Extrema Propagation Timeout Single Start K=100 Drop=20%", results_name="T")
 '''
+simulatorGenerator(10, 1, 10,  max_dist=20, drop_chance=0, debug=True).start(debug=True)
+exit()
 kwargs = []
 for n in range_n:
     args = (n, 100, 25)
