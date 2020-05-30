@@ -266,16 +266,3 @@ def simulatorGeneratorArgs(*args):
 
 #def simulatorGeneratorTArgs(*args):
 #    return simulatorGeneratorT(args[0][0], args[0][1], max_dist=args[1].get("max_dist"))
-
-analyser = Simulator_Analyzer()
-range_n = range(10, 151, 10)
-
-kwargs = []
-for n in range_n:
-    args = (n, 100, 25)
-    kwarg = {"max_dist": 20}
-    kwargs.append((args, kwarg))
-analyser.analyze_gen_variable("Número de nodos", range_n, simulatorGeneratorArgs, kwargs, 100,  title="Extrema Propagation K=100 T=25% Drop=20%", results_name="Erro relativo (%)")
-#analyser.analyze_gen_variable("Número de nodos", range_n, simulatorGeneratorTArgs, kwargs, 100,  title="Extrema Propagation K=100 Drop=20%", results_name="T")
-
-print("Fim!!")

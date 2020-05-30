@@ -114,13 +114,3 @@ def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug 
     simulator = UnstableNetworkSimulator(nodes, dists, max_dist=max_dist, timeout=timeout, network_change_time=10, debug=True)
     simulator.start()
     return simulator
-
-analyser = Simulator_Analyzer()
-range_n = range(5, 10)
-simulators = []
-for n in range_n:
-    simulators.append(simulatorGenerator(n, 15, 15, max_dist=20))
-
-analyser.analyze_variable("Number of Nodes3", range_n, simulators, 5, title="Extrema Propagation Timeout")
-
-print("Fim!!")

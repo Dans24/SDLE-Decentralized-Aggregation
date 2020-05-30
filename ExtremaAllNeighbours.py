@@ -141,22 +141,9 @@ def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug 
         neighbours = list(graph.neighbors(node))
         graph_node = ExtremaNode(node, neighbours, K, T, drop_chance = 0.0, timeout=max_dist)
         nodes.append(graph_node)
-    simulator = UnstableNetworkSimulator(nodes, dists, max_dist=max_dist, timeout=timeout, network_change_time=10, debug=True)
+    simulator = UnstableNetworkSimulator(nodes, dists, max_dist=max_dist, timeout=timeout, network_change_time=10, debug=False)
     simulator.start()
     return simulator
 
 def simulatorGeneratorArgs(*args):
     return simulatorGenerator(args[0][0], args[0][1], args[0][2],  max_dist=args[1].get("max_dist"))
-
-
-analyser = Simulator_Analyzer()
-range_n = range(5, 10)
-iters = 25
-simulators = []
-for n in range_n:
-    round = []
-    for m in range(iters):
-        round.append(simulatorGenerator(n, 100, 10,max_dist=20))
-    simulators.append(round)
-
-analyser.analyze_variable("Number of Nodes", range_n, simulators, 5, title="Extrema Propagation All Neighbours")

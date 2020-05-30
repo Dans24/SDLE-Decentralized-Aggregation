@@ -19,6 +19,7 @@ class ExtremaNode(discrete_event_simulator.Node):
         self.drop_chance = drop_chance
         self.timeout = timeout
         self.timeout_time = 0
+        self.nonews = 0
         
     def start(self):
         self.converged = False
@@ -53,7 +54,9 @@ class ExtremaNode(discrete_event_simulator.Node):
     def broadcast_messages(self, body):
         msgs = []
         for neighbor in self.neighbours:
-            if random.random() > self.drop_chance:
+            rand = random.random()
+            print(rand, self.drop_chance)
+            if rand > self.drop_chance:
                 msgs.append(discrete_event_simulator.Message(self.node, neighbor, body))
         return msgs
 
@@ -175,7 +178,7 @@ class UnstableNetworkSimulator(discrete_event_simulator.Simulator):
             print("Update network")
         graph = gen_Graphs.random_graph(len(self.nodes))
         for node in graph.nodes:
-            self.nodes[node].neighbours = list(graph.neighbours(node))
+            self.nodes[node].neighbours = list(graph.neighbors(node))
             for neighbour in self.nodes[node].neighbours:
                 self.distances[node][neighbour] = random.randrange(1, self.max_dist + 1)
                 #if self.debug:
@@ -221,16 +224,3 @@ def simulatorGeneratorArgs(*args):
 
 def simulatorGeneratorTArgs(*args):
     return simulatorGeneratorT(args[0][0], args[0][1], max_dist=args[1].get("max_dist"), drop_chance=args[1].get("drop_chance"))
-
-analyser = Simulator_Analyzer()
-range_n = range(10, 151, 10)
-
-kwargs = []
-for n in range_n:
-    args = (n, 100, 25)
-    kwarg = {"max_dist": 20, "drop_chance": 0.2}
-    kwargs.append((args, kwarg))
-analyser.analyze_gen_variable("Número de nodos", range_n, simulatorGeneratorArgs, kwargs, 100,  title="Extrema Propagation No Wait Broadcast On Change Only K=100 T=25 Drop=20%", results_name="Erro relativo (%)")
-analyser.analyze_gen_variable("Número de nodos", range_n, simulatorGeneratorTArgs, kwargs, 100,  title="Extrema Propagation No Wait Broadcast On Change Only K=100 Drop=20%", results_name="T")
-
-print("Fim!!")
