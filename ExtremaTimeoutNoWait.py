@@ -19,6 +19,7 @@ class ExtremaNode(discrete_event_simulator.Node):
         self.drop_chance = drop_chance
         self.timeout = timeout
         self.timeout_time = 0
+        self.nonews = 0
         
     def start(self):
         self.converged = False
@@ -72,7 +73,6 @@ class ExtremaNodeQuery(ExtremaNode):
         super().__init__(node, neighbours, K, T, drop_chance, r, timeout)
         self.answer = answer
         self.single = single
-        self.no_news = 0
 
     def start(self):
         return super().start()
@@ -85,14 +85,14 @@ class ExtremaNodeQuery(ExtremaNode):
                 self.x[i] = message.body[i]
                 changed = True
         if changed:
-            self.no_news = 0
+            self.nonews = 0
         else:
-            self.no_news += 1
+            self.nonews += 1
         # TODO: basear o T em relação ao número de vizinhos?
         #print("No news:", self.nonews)
-        if self.no_news >= self.T:
+        if self.nonews >= self.T:
             if not self.converged:
-                self.converged
+                self.converged = True
                 self.N = (self.K - 1) / sum(self.x) # unbiased estimator of N with exponential distribution
             # variance = (N**2) / (self.K - 2)
             if self.single:
@@ -181,22 +181,6 @@ def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug 
     graph = gen_Graphs.random_graph(n)
     dists = [[0 for _ in range(n)] for _ in range(n)] # fill matrix with zeroes
     nodes = []
-    first = True
-    for node in graph.nodes:
-        neighbours = list(graph.neighbors(node))
-        if first:
-            graph_node = ExtremaNodeQuery(node, neighbours, K, T, n, drop_chance = drop_chance, timeout=max_dist)
-            first = False
-        else:
-            graph_node = ExtremaNode(node, neighbours, K, T, drop_chance = 0.0, timeout=max_dist)
-        nodes.append(graph_node)
-    simulator = UnstableNetworkSimulator(nodes, dists, max_dist=max_dist, timeout=timeout, network_change_time=10)
-    return simulator
-
-def simulatorGeneratorAll(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug = False, drop_chance = 0.0):
-    graph = gen_Graphs.random_graph(n)
-    dists = [[0 for _ in range(n)] for _ in range(n)] # fill matrix with zeroes
-    nodes = []
     for node in graph.nodes:
         neighbours = list(graph.neighbors(node))
         graph_node = ExtremaNodeQuery(node, neighbours, K, T, n, drop_chance = drop_chance, timeout=max_dist, single=False)
@@ -211,11 +195,7 @@ def simulatorGeneratorT(n, K, max_dist = 0, timeout = 0, fanout = None, debug = 
     first = True
     for node in graph.nodes:
         neighbours = list(graph.neighbors(node))
-        if first:
-            graph_node = ExtremaNodeQueryT(node, neighbours, K, 0, (False, nodes), drop_chance = 0.0, timeout=max_dist)
-            first = False
-        else:
-            graph_node = ExtremaNode(node, neighbours, K, None, drop_chance = drop_chance, timeout=max_dist)
+        graph_node = ExtremaNodeQueryT(node, neighbours, K, 0, (False, nodes), drop_chance = 0.0, timeout=max_dist)
         nodes.append(graph_node)
     simulator = UnstableNetworkSimulator(nodes, dists, max_dist=max_dist, timeout=timeout, network_change_time=10)
     return simulator
@@ -224,66 +204,5 @@ def simulatorGeneratorT(n, K, max_dist = 0, timeout = 0, fanout = None, debug = 
 def simulatorGeneratorArgs(*args):
     return simulatorGenerator(args[0][0], args[0][1], args[0][2],  max_dist=args[1].get("max_dist"), drop_chance=args[1].get("drop_chance"))
 
-def simulatorGeneratorAllArgs(*args):
-    return simulatorGeneratorAll(args[0][0], args[0][1], args[0][2],  max_dist=args[1].get("max_dist"), drop_chance=args[1].get("drop_chance"))
-
 def simulatorGeneratorTArgs(*args):
     return simulatorGeneratorT(args[0][0], args[0][1], max_dist=args[1].get("max_dist"), drop_chance=args[1].get("drop_chance"))
-
-analyser = Simulator_Analyzer()
-range_n = range(10, 201, 20)
-'''
-simulators = []
-iters = 25
-print("A carregar simuladores...")
-"""
-def fill(simulators, i, n, iters):
-    round = []
-    print("A começar", n)
-    for m in range(iters):
-        round.append(simulatorGenerator(n, 100, 50, max_dist=20, drop_chance = 0.2))
-    simulators[i] = round
-    print("Terminou ", n)
-
-threads = []
-pool = ThreadPool(len(range_n))
-for n in range_n:
-    simulators.append(None)
-    pool.apply_async(fill, args=(simulators, len(simulators) - 1, n, iters,))
-
-pool.close()
-pool.join()
-print()
-"""
-for n in range_n:
-    round = []
-    for m in range(iters):
-        round.append(simulatorGenerator(n, 100, 50, max_dist=20, drop_chance = 0.2))
-    simulators.append(round)
-    print("Ronda carregada:", n)
-
-print("Simuladores carregados...")
-analyser.analyze_variable("Número de nodos", range_n, simulators, 100, title="Extrema Propagation Timeout Single Start K=100 T=50 Drop=20%", results_name="Erro %")
-
-print("A carregar simuladores...")
-simulators = []
-for n in range_n:
-    round = []
-    for m in range(iters):
-        round.append(simulatorGeneratorT(n, 100, max_dist=20, drop_chance=0.2))
-    simulators.append(round)
-    print("Ronda carregada:", n)
-print("Simuladores carregados...")
-analyser.analyze_variable("Número de nodos", range_n, simulators, 100, title="Extrema Propagation Timeout Single Start K=100 Drop=20%", results_name="T")
-'''
-simulatorGenerator(10, 1, 10,  max_dist=20, drop_chance=0, debug=True).start(debug=True)
-exit()
-kwargs = []
-for n in range_n:
-    args = (n, 100, 25)
-    kwarg = {"max_dist": 20, "drop_chance": 0.2}
-    kwargs.append((args, kwarg))
-analyser.analyze_gen_variable("Número de nodos", range_n, simulatorGeneratorArgs, kwargs, 100,  title="Extrema Propagation No Wait K=100 T=25 Drop=20%", results_name="Erro relativo (%)")
-analyser.analyze_gen_variable("Número de nodos", range_n, simulatorGeneratorTArgs, kwargs, 100,  title="Extrema Propagation No Wait K=100 Drop=20%", results_name="T")
-
-print("Fim!!")

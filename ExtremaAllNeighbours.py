@@ -32,8 +32,6 @@ class ExtremaNode(discrete_event_simulator.Node):
         return 0
 
     def handle_message(self, message: discrete_event_simulator.Message, time):
-        if self.debug:
-            print("+" + str(self.converged) + " that I converged")
         self.time = time
         oldx = False
         for i in range(self.K):
@@ -46,11 +44,6 @@ class ExtremaNode(discrete_event_simulator.Node):
         else:
             if message.src not in self.gotFrom:
                 self.gotFrom.append(message.src)
-            if self.debug:
-                if not self.converged:
-                    print("me: " + str(message.to) + " src:" + str(message.src) + " current array: " + str(self.gotFrom) + " neighbours: " + str(self.neighbours))
-                else:
-                    print("me:" + str(self.node) + " Converged")
             if len(self.gotFrom) == len(self.neighbours):
                 self.nonews += 1
                 self.gotFrom.clear()
@@ -59,26 +52,18 @@ class ExtremaNode(discrete_event_simulator.Node):
             msgs = []
             if not self.converged:
                 N = (self.K - 1) / sum(self.x)
-                variance = (N**2) / (self.K - 2)
-                if self.debug:
-                    print("Node ", self.node, " :: Result: " , N, " ± ", (variance**(1/2)) * 3)
             else:
                 msgs.append(discrete_event_simulator.Message(self.node, message.src, self.x))
-                if self.debug:
-                    for msg in msgs:
-                        print("--> me: " + str(msg.src) + " to: " + str(msg.to) + " request message sent")
             self.converged = True
-            return (msgs, [])
+        if time >= self.timeout_time and not self.converged:
+            timeout_event = self.set_timeout(time, None)
         else:
-            if time >= self.timeout_time and not self.converged:
-                timeout_event = self.set_timeout(time, None)
-            else:
-                timeout_event = []
-            msgs = self.missingN_messages(self.x)
-            if self.debug:
-                for msg in msgs:
-                    print("src: " + str(msg.src) + " to: " + str(msg.to))
-            return (msgs, timeout_event)
+            timeout_event = []
+        msgs = self.missingN_messages(self.x)
+        if self.debug:
+            for msg in msgs:
+                print("src: " + str(msg.src) + " to: " + str(msg.to))
+        return (msgs, timeout_event)
 
     def handle_event(self, event: discrete_event_simulator.SelfEvent, time):
         if self.converged:
@@ -133,7 +118,7 @@ class UnstableNetworkSimulator(discrete_event_simulator.Simulator):
             self.distances[node][node] = self.timeout
         return []
 
-def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug = False):
+def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, network_change_time = float("inf"), debug = False):
     graph = gen_Graphs.random_graph(n)
     dists = [[0 for _ in range(n)] for _ in range(n)] # fill matrix with zeroes
     nodes = []
@@ -141,22 +126,8 @@ def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug 
         neighbours = list(graph.neighbors(node))
         graph_node = ExtremaNode(node, neighbours, K, T, drop_chance = 0.0, timeout=max_dist)
         nodes.append(graph_node)
-    simulator = UnstableNetworkSimulator(nodes, dists, max_dist=max_dist, timeout=timeout, network_change_time=10, debug=True)
-    simulator.start()
+    simulator = UnstableNetworkSimulator(nodes, dists, max_dist=max_dist, timeout=timeout, network_change_time=network_change_time, debug=False)
     return simulator
 
 def simulatorGeneratorArgs(*args):
-    return simulatorGenerator(args[0][0], args[0][1], args[0][2],  max_dist=args[1].get("max_dist"))
-
-
-analyser = Simulator_Analyzer()
-range_n = range(5, 10)
-iters = 25
-simulators = []
-for n in range_n:
-    round = []
-    for m in range(iters):
-        round.append(simulatorGenerator(n, 100, 10,max_dist=20))
-    simulators.append(round)
-
-analyser.analyze_variable("Number of Nodes", range_n, simulators, 5, title="Extrema Propagation All Neighbours")
+    return simulatorGenerator(args[0][0], args[0][1], args[0][2], max_dist=args[1].get("max_dist"), network_change_time=args[1].get("network_change_time"))
