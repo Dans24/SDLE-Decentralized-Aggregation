@@ -68,9 +68,10 @@ class ExtremaNode(discrete_event_simulator.Node):
         return [(self.timeout, discrete_event_simulator.SelfEvent(self.node, body))]
 
 class ExtremaNodeQuery(ExtremaNode):
-    def __init__(self, node, neighbours, K: int, T: int, answer, drop_chance = 0.0, r = 1, timeout = 1):
+    def __init__(self, node, neighbours, K: int, T: int, answer, drop_chance = 0.0, r = 1, timeout = 1, single=True):
         super().__init__(node, neighbours, K, T, drop_chance, r, timeout)
         self.answer = answer
+        self.single = single
 
     def start(self):
         return super().start()
@@ -89,9 +90,12 @@ class ExtremaNodeQuery(ExtremaNode):
         # TODO: basear o T em relação ao número de vizinhos?
         #print("No news:", self.nonews)
         if self.no_news >= self.T:
-            self.N = (self.K - 1) / sum(self.x) # unbiased estimator of N with exponential distribution
+            if not self.converged:
+                self.converged = True
+                self.N = (self.K - 1) / sum(self.x) # unbiased estimator of N with exponential distribution
             # variance = (N**2) / (self.K - 2)
-            return None
+            if self.single:
+                return None
         # TODO: enviar mensagens apenas quando existe alteração?
         else:
             if time >= self.timeout_time and not self.converged:
@@ -193,7 +197,6 @@ def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug 
             graph_node = ExtremaNode(node, neighbours, K, T, drop_chance = 0.0, timeout=max_dist)
         nodes.append(graph_node)
     simulator = UnstableNetworkSimulator(nodes, dists, max_dist=max_dist, timeout=timeout, network_change_time=10)
-    simulator.start()
     return simulator
 
 def simulatorGeneratorT(n, K, max_dist = 0, timeout = 0, fanout = None, debug = False, drop_chance = 0.0):
