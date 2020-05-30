@@ -4,8 +4,8 @@ import ExtremaTimeoutNoWaitChange as ExtAllNeighNoWaitChange
 import Simulator_Statistics as Analyzer
 
 analyser = Analyzer.Simulator_Analyzer()
-range_n = [5, 10]  # range(10, 201, 20)
-range_K = [5, 10]  # [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048]
+range_n = [3, 7]  # range(10, 201, 20)
+range_K = [3, 7]  # [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048]
 n_iters = 3  # 10
 kwargs = []
 
@@ -13,7 +13,7 @@ def analize_n():
     print("Analysing variable N")
     kwargs = []
     for n in range_n:
-        args = (n, 128, 25)
+        args = (n, 128, 5)
         kwarg = {"max_dist": 20, "drop_chance": 0.0}
         kwargs.append((args, kwarg))
 
@@ -30,8 +30,8 @@ def analyse_K():
     print("Analysing variable K")
     kwargs = []
     for k in range_K:
-        args = (100, k, 25)
-        kwarg = {"max_dist": 20}
+        args = (5, k, 25)
+        kwarg = {"max_dist": 20, "drop_chance": 0.0}
         kwargs.append((args, kwarg))
 
     #No TArgs
