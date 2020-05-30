@@ -182,7 +182,7 @@ def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug 
     nodes = []
     first = True
     for node in graph.nodes:
-        neighbours = list(graph.neighbours(node))
+        neighbours = list(graph.neighbors(node))
         if first:
             graph_node = ExtremaNodeQuery(node, neighbours, K, T, n, drop_chance = drop_chance, timeout=max_dist)
             first = False
@@ -209,7 +209,7 @@ def simulatorGeneratorT(n, K, max_dist = 0, timeout = 0, fanout = None, debug = 
     nodes = []
     first = True
     for node in graph.nodes:
-        neighbours = list(graph.neighbours(node))
+        neighbours = list(graph.neighbors(node))
         if first:
             graph_node = ExtremaNodeQueryT(node, neighbours, K, 0, (False, nodes), drop_chance = 0.0, timeout=max_dist)
             first = False
@@ -230,7 +230,7 @@ def simulatorGeneratorTArgs(*args):
     return simulatorGeneratorT(args[0][0], args[0][1], max_dist=args[1].get("max_dist"), drop_chance=args[1].get("drop_chance"))
 
 analyser = Simulator_Analyzer()
-range_n = range(10, 151, 10)
+range_n = range(10, 201, 20)
 '''
 simulators = []
 iters = 25

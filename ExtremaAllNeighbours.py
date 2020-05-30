@@ -125,7 +125,7 @@ class UnstableNetworkSimulator(discrete_event_simulator.Simulator):
             print("Update network")
         graph = gen_Graphs.random_graph(len(self.nodes))
         for node in graph.nodes:
-            self.nodes[node].neighbours = list(graph.neighbours(node))
+            self.nodes[node].neighbours = list(graph.neighbors(node))
             for neighbour in self.nodes[node].neighbours:
                 self.distances[node][neighbour] = random.randrange(1, self.max_dist + 2)
                 if self.debug:
@@ -138,12 +138,16 @@ def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug 
     dists = [[0 for _ in range(n)] for _ in range(n)] # fill matrix with zeroes
     nodes = []
     for node in graph.nodes:
-        neighbours = list(graph.neighbours(node))
+        neighbours = list(graph.neighbors(node))
         graph_node = ExtremaNode(node, neighbours, K, T, drop_chance = 0.0, timeout=max_dist)
         nodes.append(graph_node)
     simulator = UnstableNetworkSimulator(nodes, dists, max_dist=max_dist, timeout=timeout, network_change_time=10, debug=True)
     simulator.start()
     return simulator
+
+def simulatorGeneratorArgs(*args):
+    return simulatorGenerator(args[0][0], args[0][1], args[0][2],  max_dist=args[1].get("max_dist"))
+
 
 analyser = Simulator_Analyzer()
 range_n = range(5, 10)

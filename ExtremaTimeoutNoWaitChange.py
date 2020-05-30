@@ -189,7 +189,7 @@ def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug 
     nodes = []
     first = True
     for node in graph.nodes:
-        neighbours = list(graph.neighbours(node))
+        neighbours = list(graph.neighbors(node))
         if first:
             graph_node = ExtremaNodeQuery(node, neighbours, K, T, n, drop_chance = drop_chance, timeout=max_dist)
             first = False
@@ -205,7 +205,7 @@ def simulatorGeneratorT(n, K, max_dist = 0, timeout = 0, fanout = None, debug = 
     nodes = []
     first = True
     for node in graph.nodes:
-        neighbours = list(graph.neighbours(node))
+        neighbours = list(graph.neighbors(node))
         if first:
             graph_node = ExtremaNodeQueryT(node, neighbours, K, 0, (False, nodes), drop_chance = 0.0, timeout=max_dist)
             first = False
@@ -224,50 +224,7 @@ def simulatorGeneratorTArgs(*args):
 
 analyser = Simulator_Analyzer()
 range_n = range(10, 151, 10)
-'''
-simulators = []
-iters = 25
-print("A carregar simuladores...")
-"""
-def fill(simulators, i, n, iters):
-    round = []
-    print("A começar", n)
-    for m in range(iters):
-        round.append(simulatorGenerator(n, 100, 50, max_dist=20, drop_chance = 0.2))
-    simulators[i] = round
-    print("Terminou ", n)
 
-threads = []
-pool = ThreadPool(len(range_n))
-for n in range_n:
-    simulators.append(None)
-    pool.apply_async(fill, args=(simulators, len(simulators) - 1, n, iters,))
-
-pool.close()
-pool.join()
-print()
-"""
-for n in range_n:
-    round = []
-    for m in range(iters):
-        round.append(simulatorGenerator(n, 100, 50, max_dist=20, drop_chance = 0.2))
-    simulators.append(round)
-    print("Ronda carregada:", n)
-
-print("Simuladores carregados...")
-analyser.analyze_variable("Número de nodos", range_n, simulators, 100, title="Extrema Propagation Timeout Single Start K=100 T=50 Drop=20%", results_name="Erro %")
-
-print("A carregar simuladores...")
-simulators = []
-for n in range_n:
-    round = []
-    for m in range(iters):
-        round.append(simulatorGeneratorT(n, 100, max_dist=20, drop_chance=0.2))
-    simulators.append(round)
-    print("Ronda carregada:", n)
-print("Simuladores carregados...")
-analyser.analyze_variable("Número de nodos", range_n, simulators, 100, title="Extrema Propagation Timeout Single Start K=100 Drop=20%", results_name="T")
-'''
 kwargs = []
 for n in range_n:
     args = (n, 100, 25)

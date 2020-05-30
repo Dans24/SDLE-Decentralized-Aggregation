@@ -217,7 +217,7 @@ class UnstableNetworkSimulator(discrete_event_simulator.Simulator):
             print("Update network")
         graph = gen_Graphs.random_graph(len(self.nodes))
         for node in graph.nodes:
-            self.nodes[node].neighbours = list(graph.neighbours(node))
+            self.nodes[node].neighbours = list(graph.neighbors(node))
             for neighbour in self.nodes[node].neighbours:
                 self.distances[node][neighbour] = random.randrange(1, self.max_dist + 2)
                 if self.debug:
@@ -231,14 +231,14 @@ def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug 
     nodes = []
     first = True
     for node in graph.nodes:
-        neighbours = list(graph.neighbours(node))
+        neighbours = list(graph.neighbors(node))
         if first:
             graph_node = ExtremaNodeQuery(node, neighbours, K, T, n, drop_chance = drop_chance, timeout=max_dist)
             first = False
         else:
             graph_node = ExtremaNode(node, neighbours, K, T, n, drop_chance = drop_chance, timeout=max_dist)
         nodes.append(graph_node)
-    simulator = UnstableNetworkSimulator(nodes, dists, max_dist=max_dist, timeout=timeout, network_change_time=10, debug=True)
+    simulator = UnstableNetworkSimulator(nodes, dists, max_dist=max_dist, timeout=timeout, network_change_time=10, debug=False)
     simulator.start()
     return simulator
 
@@ -249,7 +249,7 @@ def simulatorGeneratorT(n, K, max_dist = 0, timeout = 0, fanout = None, debug = 
     nodes = []
     first = True
     for node in graph.nodes:
-        neighbours = list(graph.neighbours(node))
+        neighbours = list(graph.neighbors(node))
         if first:
             graph_node = ExtremaNodeQueryT(node, neighbours, K, 0, (False, nodes), drop_chance = 0.0, timeout=max_dist)
             first = False
@@ -262,10 +262,10 @@ def simulatorGeneratorT(n, K, max_dist = 0, timeout = 0, fanout = None, debug = 
 """
 
 def simulatorGeneratorArgs(*args):
-    return simulatorGenerator(args[0][0], args[0][1], args[0][2],  max_dist=args[1].get("max_dist"), drop_chance=args[1].get("drop_chance"))
+    return simulatorGenerator(args[0][0], args[0][1], args[0][2],  max_dist=args[1].get("max_dist"))
 
 #def simulatorGeneratorTArgs(*args):
-#    return simulatorGeneratorT(args[0][0], args[0][1], max_dist=args[1].get("max_dist"), drop_chance=args[1].get("drop_chance"))
+#    return simulatorGeneratorT(args[0][0], args[0][1], max_dist=args[1].get("max_dist"))
 
 analyser = Simulator_Analyzer()
 range_n = range(10, 151, 10)
@@ -273,7 +273,7 @@ range_n = range(10, 151, 10)
 kwargs = []
 for n in range_n:
     args = (n, 100, 25)
-    kwarg = {"max_dist": 20, "drop_chance": 0}
+    kwarg = {"max_dist": 20}
     kwargs.append((args, kwarg))
 analyser.analyze_gen_variable("Número de nodos", range_n, simulatorGeneratorArgs, kwargs, 100,  title="Extrema Propagation K=100 T=25% Drop=20%", results_name="Erro relativo (%)")
 #analyser.analyze_gen_variable("Número de nodos", range_n, simulatorGeneratorTArgs, kwargs, 100,  title="Extrema Propagation K=100 Drop=20%", results_name="T")
