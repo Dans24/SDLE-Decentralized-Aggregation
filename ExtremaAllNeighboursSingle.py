@@ -21,6 +21,7 @@ class ExtremaNodeQuery(discrete_event_simulator.Node):
         self.converged = False
         self.debug = False
         self.answer = answer
+        self.nonews = 0
         
     def start(self):
         self.no_news = 0
@@ -128,6 +129,7 @@ class ExtremaNode(discrete_event_simulator.Node):
         self.converged = False
         self.debug = False
         self.answer = answer
+        self.nonews = 0
         
     def start(self):
         self.x = []
