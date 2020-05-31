@@ -18,24 +18,23 @@ def analize_n(Ts):
             args = (n, 128, T)
             kwarg = {
                 "max_dist": 20,
-                "drop_chance": 0.0,
+                "drop_chance": 0.2,
                 "timeout": float("inf"),
                 "network_change_time": float("inf")
             }
             argss.append((args, kwarg))
         kwargs.append(argss)
 
-    # No TArgs
     print("All Neighbours N, no network change")
     analyser.analyze_gen_variable("Número de nodos", range_n, ExtAllNeigh.simulatorGeneratorArgs, kwargs[0], n_iters,
-                                  title="Extrema Propagation All Neighbors K=128 T=2  Drop=0%", results_name="Erro relativo (%)")
-    # No TArgs
+                                  title="Extrema Propagation All Neighbors (Preferential) K=128 T=10", results_name="Erro relativo (%)")
+
     print("No Wait N, no network change")
     analyser.analyze_gen_variable("Número de nodos", range_n, ExtAllNeighNoWait.simulatorGeneratorArgs, kwargs[1], n_iters,
-                                  title="Extrema Propagation No Wait K=128 T=10 Drop=0%", results_name="Erro relativo (%)")
+                                  title="Extrema Propagation No Wait (Preferential) K=128 T=10", results_name="Erro relativo (%)")
     print("No Wait Change N, no network change")
     analyser.analyze_gen_variable("Número de nodos", range_n, ExtAllNeighNoWaitChange.simulatorGeneratorArgs, kwargs[2], n_iters,
-                                  title="Extrema Propagation No Wait with Change K=128 T=5 Drop=0%", results_name="Erro relativo (%)")
+                                  title="Extrema Propagation No Wait Change (2d) K=128 T=10", results_name="Erro relativo (%)")
 
 def analyse_K():
     print("Analysing variable K")
@@ -52,23 +51,14 @@ def analyse_K():
 
     #No TArgs
     analyser.analyze_gen_variable("Número de nodos", range_n, ExtAllNeigh.simulatorGeneratorArgs, kwargs, 100,
-                                 title="Extrema Propagation All Neighbors n=100 T=25 Drop=0%", results_name="Erro relativo (%)")
+                                 title="Extrema Propagation All Neighbors (Preferential) n=100 T=25 Drop=0%", results_name="Erro relativo (%)")
     analyser.analyze_gen_variable("Número de nodos", range_n, ExtAllNeighNoWait.simulatorGeneratorTArgs, kwargs, 100,
-                                  title="Extrema Propagation No Wait n=100 Drop=0%", results_name="Erro relativo (%)")
+                                  title="Extrema Propagation No Wait (Preferential) n=100 Drop=0%", results_name="Erro relativo (%)")
     analyser.analyze_gen_variable("Número de nodos", range_n, ExtAllNeighNoWaitChange.simulatorGeneratorTArgs, kwargs, 100,
-                                 title="Extrema Propagation No Wait with Change n=100 Drop=0%", results_name="Erro relativo (%)")
+                                 title="Extrema Propagation No Wait with Change (Preferential) n=100 Drop=0%", results_name="Erro relativo (%)")
 
 def analyze_T():
     print("Analysing variable T")
-    kwargsExtAllNeigh = []
-    kwargsAllNeighSingle = []
-    kwargsExtllNeighNoWait= []
-    kwargsExtAllNeighNoWaitChange = []
-    #After getting perfect T em ralação a N
-    range_T_ExtAllNeigh = {}
-    range_T_ExtAllNeighSingle = {}
-    range_T_ExtAllNeighNoWait = {}
-    range_T_ExtAllNeighNoWaitChange = {}
 
     for n in range_n:
         args = (n, 128)
