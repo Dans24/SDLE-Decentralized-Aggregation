@@ -5,6 +5,7 @@ import threading
 from multiprocessing.pool import ThreadPool
 from Simulator_Statistics import Simulator_Analyzer
 
+
 """
 Semelhante ao ExtremaTimeout mas apenas um dos nodos é que faz as queries.
 """
@@ -19,7 +20,7 @@ class ExtremaNode(discrete_event_simulator.Node):
         self.drop_chance = drop_chance
         self.timeout = timeout
         self.timeout_time = 0
-        self.nonews = 0
+        self.no_news = 0
         
     def start(self):
         self.converged = False
@@ -54,7 +55,7 @@ class ExtremaNode(discrete_event_simulator.Node):
     def broadcast_messages(self, body):
         msgs = []
         for neighbour in self.neighbours:
-            if random.random() > self.drop_chance:
+            if random.random() >= self.drop_chance:
                 msgs.append(discrete_event_simulator.Message(self.node, neighbour, body))
         return msgs
 
@@ -85,12 +86,13 @@ class ExtremaNodeQuery(ExtremaNode):
                 self.x[i] = message.body[i]
                 changed = True
         if changed:
-            self.nonews = 0
+            self.no_news = 0
         else:
-            self.nonews += 1
+            self.no_news += 1
         # TODO: basear o T em relação ao número de vizinhos?
-        #print("No news:", self.nonews)
-        if self.nonews >= self.T:
+        #print("No news:", self.no_news)
+        #print(message.src, message.to, self.no_news, self.converged)
+        if self.no_news >= self.T:
             if not self.converged:
                 self.converged = True
                 self.N = (self.K - 1) / sum(self.x) # unbiased estimator of N with exponential distribution
@@ -119,10 +121,11 @@ class ExtremaNodeQueryT(ExtremaNodeQuery):
                 self.x[i] = message.body[i]
                 changed = True
         if changed:
-            self.T = self.nonews if self.nonews > self.T else self.T
-            self.nonews = 0
+            self.no_news = 0
         else:
-            self.nonews += 1
+            self.no_news += 1
+        self.T = self.no_news if self.no_news > self.T else self.T
+        
         has_correct_answer = True
         answer = self.calculateAnswer()
         for i in range(self.K):
@@ -157,7 +160,7 @@ class ExtremaNodeQueryT(ExtremaNodeQuery):
     
     
 class UnstableNetworkSimulator(discrete_event_simulator.Simulator):
-    def __init__(self, nodes, distances, max_dist = 1, timeout = 0, network_change_time = 1, debug = False):
+    def __init__(self, nodes, distances, max_dist = 1, timeout = float("inf"), network_change_time = float("inf"), debug = False):
         super().__init__(nodes, distances)
         self.max_dist = max_dist
         self.timeout = timeout

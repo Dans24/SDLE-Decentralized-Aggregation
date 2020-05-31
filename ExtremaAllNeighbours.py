@@ -23,7 +23,7 @@ class ExtremaNode(discrete_event_simulator.Node):
         self.answer = answer
         
     def start(self):
-        self.nonews = 0
+        self.no_news = 0
         self.x = []
         for _ in range(self.K):
             self.x.append(self.r * random.expovariate(1))
@@ -40,16 +40,16 @@ class ExtremaNode(discrete_event_simulator.Node):
                 self.x[i] = message.body[i]
                 oldx = True
         if oldx:
-            self.nonews = 0
+            self.no_news = 0
             self.gotFrom.clear()
         else:
             if message.src not in self.gotFrom:
                 self.gotFrom.append(message.src)
             if len(self.gotFrom) == len(self.neighbours):
-                self.nonews += 1
+                self.no_news += 1
                 self.gotFrom.clear()
 
-        if self.nonews >= self.T:
+        if self.no_news >= self.T:
             if not self.converged:
                 self.N = (self.K - 1) / sum(self.x)
                 self.converged = True
@@ -107,14 +107,15 @@ class ExtremaNodeT(ExtremaNode):
                 self.x[i] = message.body[i]
                 oldx = True
         if oldx:
-            self.nonews = 0
+            self.no_news = 0
             self.gotFrom.clear()
         else:
             if message.src not in self.gotFrom:
                 self.gotFrom.append(message.src)
             if len(self.gotFrom) == len(self.neighbours):
-                self.nonews += 1
+                self.no_news += 1
                 self.gotFrom.clear()
+        self.T = self.no_news if self.no_news > self.T else self.T
 
         has_correct_answer = True
         answer = self.calculateAnswer()
@@ -149,7 +150,7 @@ class ExtremaNodeT(ExtremaNode):
             return self.answer[1]
     
 class UnstableNetworkSimulator(discrete_event_simulator.Simulator):
-    def __init__(self, nodes, distances, max_dist = 0, timeout = 0, network_change_time = 1, debug = False):
+    def __init__(self, nodes, distances, max_dist = 0, timeout = float("inf"), network_change_time = float("inf"), debug = False):
         super().__init__(nodes, distances)
         self.max_dist = max_dist
         self.timeout = timeout
@@ -163,7 +164,7 @@ class UnstableNetworkSimulator(discrete_event_simulator.Simulator):
         for node in graph.nodes:
             self.nodes[node].neighbours = list(graph.neighbors(node))
             for neighbour in self.nodes[node].neighbours:
-                self.distances[node][neighbour] = random.randrange(1, self.max_dist + 2)
+                self.distances[node][neighbour] = random.randrange(1, self.max_dist + 1)
                 if self.debug:
                     print(str(node) + " -> " + str(neighbour) + " = " + str(self.distances[node][neighbour]))
             self.distances[node][node] = self.timeout
@@ -186,10 +187,13 @@ def simulatorGeneratorT(n, K, max_dist = 0, timeout = float("inf"), fanout = Non
     nodes = []
     for node in graph.nodes:
         neighbours = list(graph.neighbors(node))
-        graph_node = ExtremaNodeT(node, neighbours, K, drop_chance = 0.0, timeout=timeout, answer = (False, nodes))
+        graph_node = ExtremaNodeT(node, neighbours, K, 0, drop_chance = 0.0, timeout=timeout, answer = (False, nodes))
         nodes.append(graph_node)
     simulator = UnstableNetworkSimulator(nodes, dists, max_dist=max_dist, timeout=timeout, network_change_time=network_change_time, debug=False)
     return simulator
 
 def simulatorGeneratorArgs(*args):
     return simulatorGenerator(args[0][0], args[0][1], args[0][2], max_dist=args[1].get("max_dist"), network_change_time=args[1].get("network_change_time"), timeout=args[1].get("timeout"))
+
+def simulatorGeneratorTArgs(*args):
+    return simulatorGeneratorT(args[0][0], args[0][1], max_dist=args[1].get("max_dist"), network_change_time=args[1].get("network_change_time"), timeout=args[1].get("timeout"))

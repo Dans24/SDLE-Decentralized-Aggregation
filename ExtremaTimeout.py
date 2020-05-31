@@ -18,7 +18,7 @@ class ExtremaNode(discrete_event_simulator.Node):
         
     def start(self):
         # TODO: Começar em apenas 1?
-        self.nonews = 0
+        self.no_news = 0
         self.converged = False
         self.x = []
         for _ in range(self.K):
@@ -33,11 +33,11 @@ class ExtremaNode(discrete_event_simulator.Node):
                 self.x[i] = message.body[i]
                 changed = True
         if changed:
-            self.nonews = 0
+            self.no_news = 0
         else:
-            self.nonews += 1
+            self.no_news += 1
         # TODO: basear o T em relação ao número de vizinhos?
-        if self.nonews >= self.T:
+        if self.no_news >= self.T:
             # TODO: Os nodos convergidos não estão a convergir, fazer o teste só para 1?
             if not self.converged:
                 N = (self.K - 1) / sum(self.x) # unbiased estimator of N with exponential distribution

@@ -18,7 +18,7 @@ class ExtremaNode(discrete_event_simulator.Node):
         self.drop_chance = drop_chance
         
     def start(self):
-        self.nonews = 0
+        self.no_news = 0
         self.converged = False
         self.x = []
         for _ in range(self.K):
@@ -37,10 +37,10 @@ class ExtremaNode(discrete_event_simulator.Node):
                 self.x[i] = message.body[i]
                 changed = True
         if changed:
-            self.nonews = 0
+            self.no_news = 0
         else:
-            self.nonews += 1
-        if self.nonews >= self.T:
+            self.no_news += 1
+        if self.no_news >= self.T:
             if self.converged:
                 N = (self.K - 1) / sum(self.x) # unbiased estimator of N with exponential distribution
                 variance = (N**2) / (self.K - 2)

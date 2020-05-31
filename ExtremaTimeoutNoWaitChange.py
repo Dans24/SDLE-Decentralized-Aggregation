@@ -19,7 +19,7 @@ class ExtremaNode(discrete_event_simulator.Node):
         self.drop_chance = drop_chance
         self.timeout = timeout
         self.timeout_time = 0
-        self.nonews = 0
+        self.no_news = 0
         
     def start(self):
         self.converged = False
@@ -55,8 +55,7 @@ class ExtremaNode(discrete_event_simulator.Node):
         msgs = []
         for neighbor in self.neighbours:
             rand = random.random()
-            print(rand, self.drop_chance)
-            if rand > self.drop_chance:
+            if rand >= self.drop_chance:
                 msgs.append(discrete_event_simulator.Message(self.node, neighbor, body))
         return msgs
 
@@ -91,7 +90,7 @@ class ExtremaNodeQuery(ExtremaNode):
         else:
             self.no_news += 1
         # TODO: basear o T em relação ao número de vizinhos?
-        #print("No news:", self.nonews)
+        #print("No news:", self.no_news)
         if self.no_news >= self.T:
             if not self.converged:
                 self.converged = True
@@ -100,16 +99,15 @@ class ExtremaNodeQuery(ExtremaNode):
             if self.single:
                 return None
         # TODO: enviar mensagens apenas quando existe alteração?
+        if time >= self.timeout_time and not self.converged:
+            timeout_event = self.set_timeout(time, None)
         else:
-            if time >= self.timeout_time and not self.converged:
-                timeout_event = self.set_timeout(time, None)
-            else:
-                timeout_event = []
-            if changed:
-                msgs = self.broadcast_messages(self.x)
-            else:
-                msgs = []
-            return (msgs, timeout_event)
+            timeout_event = []
+        if changed:
+            msgs = self.broadcast_messages(self.x)
+        else:
+            msgs = []
+        return (msgs, timeout_event)
         
     def result(self):
         return (abs(self.N - self.answer) / self.answer) * 100
@@ -125,10 +123,10 @@ class ExtremaNodeQueryT(ExtremaNodeQuery):
                 self.x[i] = message.body[i]
                 changed = True
         if changed:
-            self.T = self.nonews if self.nonews > self.T else self.T
-            self.nonews = 0
+            self.no_news = 0
         else:
-            self.nonews += 1
+            self.no_news += 1
+        self.T = self.no_news if self.no_news > self.T else self.T
         has_correct_answer = True
         answer = self.calculateAnswer()
         for i in range(self.K):
@@ -166,7 +164,7 @@ class ExtremaNodeQueryT(ExtremaNodeQuery):
     
     
 class UnstableNetworkSimulator(discrete_event_simulator.Simulator):
-    def __init__(self, nodes, distances, max_dist = 1, timeout = 0, network_change_time = 1, debug = False):
+    def __init__(self, nodes, distances, max_dist = 1, timeout = float("inf"), network_change_time = float("inf"), debug = False):
         super().__init__(nodes, distances)
         self.max_dist = max_dist
         self.timeout = timeout
@@ -192,7 +190,7 @@ def simulatorGenerator(n, K, T, max_dist = 0, timeout = 0, fanout = None, debug 
     nodes = []
     for node in graph.nodes:
         neighbours = list(graph.neighbors(node))
-        graph_node = ExtremaNodeQuery(node, neighbours, K, T, n, drop_chance = drop_chance, timeout=max_dist)
+        graph_node = ExtremaNodeQuery(node, neighbours, K, T, n, drop_chance = drop_chance, timeout=max_dist, single=False)
         nodes.append(graph_node)
     simulator = UnstableNetworkSimulator(nodes, dists, max_dist=max_dist, timeout=timeout, network_change_time=10)
     return simulator
@@ -203,7 +201,7 @@ def simulatorGeneratorT(n, K, max_dist = 0, timeout = 0, fanout = None, debug = 
     nodes = []
     for node in graph.nodes:
         neighbours = list(graph.neighbors(node))
-        graph_node = ExtremaNodeQueryT(node, neighbours, K, 0, (False, nodes), drop_chance = 0.0, timeout=max_dist)
+        graph_node = ExtremaNodeQueryT(node, neighbours, K, 0, (False, nodes), drop_chance = 0.0, timeout=max_dist, single=False)
         nodes.append(graph_node)
     simulator = UnstableNetworkSimulator(nodes, dists, max_dist=max_dist, timeout=timeout, network_change_time=10)
     return simulator
