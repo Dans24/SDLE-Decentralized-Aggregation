@@ -41,22 +41,22 @@ def analyse_K():
     print("Analysing variable K")
     kwargs = []
     for k in range_K:
-        args = (5, k, 25)
+        args = (10, k, 25)
         kwarg = {
             "max_dist": 20,
-            "drop_chance": 0.0,
+            "drop_chance": 25.0,
             "timeout": float("inf"),
             "network_change_time": float("inf")
         }
         kwargs.append((args, kwarg))
 
     #No TArgs
-    analyser.analyze_gen_variable("Número de nodos", range_n, ExtAllNeigh.simulatorGeneratorArgs, kwargs, 100,
-                                 title="Extrema Propagation All Neighbors n=100 T=25 Drop=0%", results_name="Erro relativo (%)")
-    analyser.analyze_gen_variable("Número de nodos", range_n, ExtAllNeighNoWait.simulatorGeneratorTArgs, kwargs, 100,
-                                  title="Extrema Propagation No Wait n=100 Drop=0%", results_name="Erro relativo (%)")
-    analyser.analyze_gen_variable("Número de nodos", range_n, ExtAllNeighNoWaitChange.simulatorGeneratorTArgs, kwargs, 100,
-                                 title="Extrema Propagation No Wait with Change n=100 Drop=0%", results_name="Erro relativo (%)")
+    analyser.analyze_gen_variable("Variação de K", range_K, ExtAllNeigh.simulatorGeneratorArgs, kwargs, n_iters,
+                                 title="Extrema Propagation All Neighbors n=10 Drop=25%", results_name="Erro relativo (%)")
+    analyser.analyze_gen_variable("Variação de K", range_K, ExtAllNeighNoWait.simulatorGeneratorTArgs, kwargs, n_iters,
+                                  title="Extrema Propagation No Wait n=10 Drop=25%", results_name="Erro relativo (%)")
+    analyser.analyze_gen_variable("Variação de K", range_K, ExtAllNeighNoWaitChange.simulatorGeneratorTArgs, kwargs, n_iters,
+                                 title="Extrema Propagation No Wait with Change n=10 Drop=25%", results_name="Erro relativo (%)")
 
 def analyze_T():
     print("Analysing variable T")
@@ -88,5 +88,5 @@ def analyze_T():
         title="Extrema Propagation No Wait Change K=128 Drop=0%", results_name="T")
 
 #analyze_T()
-analize_n([1, 5, 10])
-#analyse_K()
+#analize_n([1, 5, 10])
+analyse_K()
